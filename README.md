@@ -1,4 +1,4 @@
-﻿# Stowage [![Nuget](https://img.shields.io/nuget/v/Storage.IO.Files?style=for-the-badge)](https://www.nuget.org/packages/Stowage)
+﻿# Stowage [![Nuget](https://img.shields.io/nuget/v/Stowage?style=for-the-badge)](https://www.nuget.org/packages/Stowage)
 
 
 ![](media/icon/icon-64.png)
@@ -21,39 +21,37 @@ Right, time to gear up. We'll do it [step by step](https://www.oxfordlearnersdic
 Simplest case, using the local 💽.
 
 ```csharp
-using(Files.Of.LocalDisk("c:\\"))
+using Stowage;
+
+using(IFileStorage fs = Files.Of.LocalDisk("c:\\"))
 {
-   File.WriteAllText("pagefile.sys", "I'm a page!!!!");
+   await fs.WriteText("pagefile.sys", "I'm a page!!!!");
 }
 ```
 
-Compare to clouds 😉
+This is local disk, yeah? But what about cloud storage, like Azure Blob Storage? Piece of cake:
 
 ```csharp
-using(Files.Of.AzureBlobStorage("accountName", "accountKey", "containerName"))
+using Stowage;
+
+using(IFileStorage fs = Files.Of.AzureBlobStorage("accountName", "accountKey", "containerName"))
 {
-   var allEntries = Directory.GetFileSystemEntries("/");
+   var entries = await fs.Ls();
 }
 ```
 
-# Create
+# Rich Library
 
+<details>
+<summary>Listing Files</summary>
+content
+## content
 
-# IoC
-
-
-```csharp
-IFileStorage _pictureBlobs = ...;
-
-using(Files.Of.The(_pictureBlobs))
-{
-   foreach(string picture in await Directory.GetFileSystemEntries("/"))
-   {
-      Console.WriteLine($"What have I got here? It's {picture}!")
-   }
-}
-
+```python
+  test
 ```
+</details>
+
 
 # <span style="color:red">S</span>treaming
 
