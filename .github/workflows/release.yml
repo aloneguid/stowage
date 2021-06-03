@@ -25,11 +25,11 @@ jobs:
       with:
         dotnet-version: 5.0.100
     - name: Install dependencies
-      run: dotnet restore src/Storage.IO.Files.sln
+      run: dotnet restore src/Stowage.sln
     - name: Build
-      run: dotnet build src/Storage.IO.Files.sln --configuration Release --no-restore /p:Version=${{ env.pv }} /p:FileVersion=${{ env.v }} /p:AssemblyVersion=${{ env.av }}
+      run: dotnet build src/Stowage.sln --configuration Release --no-restore /p:Version=${{ env.pv }} /p:FileVersion=${{ env.v }} /p:AssemblyVersion=${{ env.av }}
     - name: Test
-      run: dotnet test src/Storage.IO.Files.sln -c release --filter Category!=Integration --no-restore --verbosity normal
+      run: dotnet test src/Stowage.sln -c release --filter Category!=Integration --no-restore --verbosity normal
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.1
       with:
@@ -48,4 +48,4 @@ jobs:
       - name: test
         run: ls -R
       - name: Push to nuget.org
-        run: dotnet nuget push Storage.IO.Files/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push Stowage/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
