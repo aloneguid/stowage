@@ -1,0 +1,3 @@
+[submodule "netbox"]
+	path = netbox
+	url = https://github.com/aloneguid/netbox.git

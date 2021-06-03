@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "System.IO.Files.Server": {
+      "commandName": "Project",
+      "commandLineArgs": "ftp az://account=algresearch;bucket=dapr;key=b6sZUTdZDK5qm/2ajjXgICwM0est2TbxuS6FaePuWV/YDmynG1saR2Nf1gV2i43kLvhyG5TRDuds/J5FD3v8kA=="
+    },
+    "dbfs": {
+      "commandName": "Project",
+      "commandLineArgs": "ftp dbfs://url=https://adb-8250406776365692.12.azuredatabricks.net/;token=dapi0956600abf8703fc544dee9ed9ebd287"
+    }
+  }
+}

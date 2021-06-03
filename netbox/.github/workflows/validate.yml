@@ -1,0 +1,32 @@
+name: Validation
+
+env:
+  v: '3.0.0'
+  av: '3.0.0'
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  valiadte:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core 3
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.301
+    - name: Setup .NET Core 5
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.103
+    - name: Install dependencies
+      run: dotnet restore netbox.sln
+    - name: Test
+      run: dotnet test netbox.sln --no-restore --verbosity normal
