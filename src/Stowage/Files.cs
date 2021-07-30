@@ -64,8 +64,18 @@ namespace Stowage
 
       public static IFileStorage AmazonS3(this IFilesFactory _, string bucketName, string accessKeyId, string secretAccessKey, string region)
       {
-         return new AwsS3FileStorage(bucketName, new S3AuthHandler(accessKeyId, secretAccessKey, region));
+         return new AwsS3FileStorage(
+            new Uri($"https://{bucketName}.s3.amazonaws.com"),
+            new S3AuthHandler(accessKeyId, secretAccessKey, region));
       }
+
+      public static IFileStorage DigitalOceanSpaces(this IFilesFactory _, string region, string accessKeyId, string secretAccessKey)
+      {
+         return new AwsS3FileStorage(
+            new Uri($"https://{region}.digitaloceanspaces.com"),
+            new S3AuthHandler(accessKeyId, secretAccessKey, region));
+      }
+
 
       public static IFileStorage GoogleCloudStorage(this IFilesFactory _, string bucketName,
          string jsonCredential)

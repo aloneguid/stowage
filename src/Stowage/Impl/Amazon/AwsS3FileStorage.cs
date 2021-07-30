@@ -14,8 +14,8 @@ namespace Stowage.Impl.Amazon
    {
       private readonly XmlResponseParser _xmlParser = new XmlResponseParser();
 
-      public AwsS3FileStorage(string bucketName, DelegatingHandler authHandler) : 
-         base(new Uri($"https://{bucketName}.s3.amazonaws.com"), authHandler)
+      public AwsS3FileStorage(Uri endpoint, DelegatingHandler authHandler) :
+         base(endpoint, authHandler)
       {
       }
 
