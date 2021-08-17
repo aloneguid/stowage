@@ -6,13 +6,14 @@
       <RepositoryType>GitHub</RepositoryType>
       <NeutralLanguage />
       <SignAssembly>false</SignAssembly>
-      <Version>1.0.0-alpha-04</Version>
+      <Version>1.0.0</Version>
       <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
       <PackageIcon>icon-64.png</PackageIcon>
-      <Description>Very early stages of next gen storage interfaces.</Description>
-      <PackageProjectUrl>https://github.com/storage-io/files</PackageProjectUrl>
+      <Description>Next gen storage client.</Description>
+      <PackageProjectUrl>https://github.com/aloneguid/stowage</PackageProjectUrl>
       <RepositoryUrl>https://github.com/aloneguid/stowage</RepositoryUrl>
       <LangVersion>latest</LangVersion>
+      <PackageTags>storage aws s3 azure blob gcp google</PackageTags>
    </PropertyGroup>
 
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">

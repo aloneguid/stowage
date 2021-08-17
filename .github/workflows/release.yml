@@ -3,7 +3,7 @@ name: Release
 env:
   v: '1.0.0'
   av: '1.0.0'
-  pv: '1.0.0'
+  pv: '1.0.1'
 
 on:
   push:
