@@ -15,7 +15,7 @@ namespace Stowage.Test.Integration
    public class StorageTestDataAttribute : DataAttribute
    {
       private readonly string _pathPrefix;
-      private IFileStorage _storage;
+      private readonly IFileStorage _storage;
 
       public StorageTestDataAttribute(string pathPrefix = null)
       {

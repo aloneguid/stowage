@@ -13,9 +13,10 @@ namespace Stowage
    public interface IFileStorage : IDisposable
    {
       /// <summary>
-      /// Returns the list of available entities on the path specified.
+      /// List entries on the path specified. An entry is usually a file, however can be a folder as well (or maybe something else in future). 
+      /// Just check documentation on <see cref="IOEntry"/> to understand what it can be. Note that <see cref="IOEntry"/> has implicit conversions to/from a string, so in most of the cases you shouldn't even care.
       /// </summary>
-      /// <param name="path"></param>
+      /// <param name="path">Path to list on. Passing <see langword="null"/> simply lists in the root of the filesystem. Remember that <see cref="IOEntry"/> has implicit to/from string conversions, so you don't have to construct it explicitly and just pass a string.</param>
       /// <param name="recurse"></param>
       /// <param name="cancellationToken"></param>
       /// <returns>List of object in this path, including files and folders. Folders end with "/" and files don't.</returns>
