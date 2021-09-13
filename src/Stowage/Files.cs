@@ -85,7 +85,7 @@ namespace Stowage
 
       public static IFileStorage DatabricksDbfs(this IFilesFactory _, Uri workspaceUri, string token)
       {
-         return new DatabricksDbfsStorage(workspaceUri, token);
+         return new DatabricksRestClient(workspaceUri, token);
       }
 
       // todo: log callback

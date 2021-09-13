@@ -11,10 +11,10 @@ namespace Stowage.Impl.Databricks
    /// </summary>
    sealed class WriteStream : PolyfilledWriteStream
    {
-      private readonly DatabricksDbfsStorage _parent;
+      private readonly DatabricksRestClient _parent;
       private readonly long _handle;
 
-      public WriteStream(DatabricksDbfsStorage parent, long handle) : base(1024 * 1024)
+      public WriteStream(DatabricksRestClient parent, long handle) : base(1024 * 1024)
       {
          _parent = parent;
          _handle = handle;

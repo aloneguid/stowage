@@ -7,10 +7,10 @@ namespace Stowage.Impl.Databricks
    {
       private const long ReadBlockLength = 1024 * 1024; // 1 Mb
 
-      private readonly DatabricksDbfsStorage _parent;
+      private readonly DatabricksRestClient _parent;
       private readonly IOPath _path;
 
-      public ReadStream(DatabricksDbfsStorage parent, IOPath path, long length) : base(ReadBlockLength, length)
+      public ReadStream(DatabricksRestClient parent, IOPath path, long length) : base(ReadBlockLength, length)
       {
          _parent = parent;
          _path = path;

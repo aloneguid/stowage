@@ -40,7 +40,7 @@ namespace Stowage.Factories
             connectionString.GetRequired(KnownParameter.Url, true, out string url);
             connectionString.GetRequired(KnownParameter.Token, true, out string token);
 
-            return new DatabricksDbfsStorage(new Uri(url), token);
+            return new DatabricksRestClient(new Uri(url), token);
          }
 
          return null;
