@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿# Stowage [![Nuget](https://img.shields.io/nuget/v/Stowage?style=for-the-badge)](https://www.nuget.org/packages/Stowage)
+﻿﻿﻿﻿﻿﻿﻿﻿# Stowage [![Nuget](https://img.shields.io/nuget/v/Stowage?style=for-the-badge)](https://www.nuget.org/packages/Stowage)
 
 
 ![](media/icon/icon-64.png)
@@ -127,6 +127,18 @@ When contributing a new provider, it's way more preferrable to embed it's code i
 
 I'm a strong opponent of simplicity and not going to repeat the mistake of turning this into a nuget tree dependency hell!
 
+## ❔ Who?
+
+- Used by:
+  - [databricks-sql-cli](https://github.com/aloneguid/databricks-sql-cli) - Unofficial Databricks SQL management console.
+  - [Pocket Bricks](https://www.aloneguid.uk/projects/pocketbricks/) - Databricks client for Android.
+- Featured in [The .NET MAUI Podcast, episode 98](https://www.dotnetmauipodcast.com/98).
+
+## Related Projects
+
+- [R**CLONE**](https://rclone.org/) - cross-platform open-source cloud sync tool.
+- [Storage.Net](https://github.com/aloneguid/storage) - the roots of this project.
+
 ## 💰 Contributing
 
-You are welcome to contribute in any form, however I wouldn't bother, especially financially. Don't bother buying me a ☕, I can do it myself! Why? During my years of OSS development everyone I know (including myself) have only lost money. Why I'm still doing this? Probably because *it's just cool and I'm enjoying it*.
+You are welcome to contribute in any form, however I wouldn't bother, especially financially. Don't bother buying me a ☕, I can do it myself real cheap during COVID! Why? During my years of OSS development everyone I know (including myself) have only lost money. Why I'm still doing this? Probably because *it's just cool and I'm enjoying it*.
