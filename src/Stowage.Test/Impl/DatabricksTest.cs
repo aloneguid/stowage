@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Stowage.Test.Impl
 {
+   [Trait("Category", "Integration")]
    public class DatabricksTest
    {
       private readonly IDatabricksClient dbc;
