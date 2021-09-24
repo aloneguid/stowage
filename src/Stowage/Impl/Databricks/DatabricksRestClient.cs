@@ -336,31 +336,121 @@ namespace Stowage.Impl.Databricks
          return objs.Objects;
       }
 
-      public async Task<IReadOnlyCollection<SqlQuery>> ListSqlQueries()
+      public async Task<IReadOnlyCollection<SqlQueryBase>> ListSqlQueries()
+      {
+         const long pageSize = 25;
+         long pageNo = 0;
+         var result = new List<SqlQueryBase>();
+         long totalCount;
+         do
+         {
+            (IReadOnlyCollection<SqlQueryBase> queries, long totalCount1) = await ListSqlQueries(pageNo++, pageSize);
+            totalCount = totalCount1;
+            result.AddRange(queries);
+         }
+         while(result.Count < totalCount);
+
+         return result;
+      }
+
+      private async Task<Tuple<IReadOnlyCollection<SqlQueryBase>, long>> ListSqlQueries(long pageNo, long pageSize)
       {
          // https://redocly.github.io/redoc/?url=https://docs.microsoft.com/azure/databricks/_static/api-refs/queries-dashboards-2.0-azure.yaml#operation/sql-analytics-get-queries
 
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlBase}/queries");
+         // pages are 1 - based, not 0 like normal people!
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlBase}/queries?page={pageNo + 1}&page_size={pageSize}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
 
          ListSqlQueriesResponse r = JsonSerializer.Deserialize<ListSqlQueriesResponse>(rjson);
 
-         return r.Results;
+         return new Tuple<IReadOnlyCollection<SqlQueryBase>, long>(r.Results, r.Count);
       }
 
-      public async Task GetSqlQueryAcl(string queryId)
+      public async Task<string> GetSqlQueryRaw(string queryId)
       {
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlBase}/queries/{queryId}");
+         HttpResponseMessage response = await SendAsync(request);
+         response.EnsureSuccessStatusCode();
+         string rjson = await response.Content.ReadAsStringAsync();
+         return rjson;
+      }
+
+      public async Task<SqlQuery> GetSqlQuery(string queryId)
+      {
+         SqlQuery r = JsonSerializer.Deserialize<SqlQuery>(await GetSqlQueryRaw(queryId));
+
+         return r;
+      }
+
+      public async Task UpdateSqlQueryRaw(string queryId, string rawJson)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlBase}/queries/{queryId}");
+         request.Content = new StringContent(rawJson);
+         HttpResponseMessage response = await SendAsync(request);
+         response.EnsureSuccessStatusCode();
+      }
+
+      public async Task<string> CreateSqlQueryRaw(string rawJson)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlBase}/queries");
+         request.Content = new StringContent(rawJson);
+         HttpResponseMessage response = await SendAsync(request);
+         await EnsureSuccessOrThrow(response);
+
+         string rjson = await response.Content.ReadAsStringAsync();
+         SqlQueryBase result = JsonSerializer.Deserialize<SqlQueryBase>(rjson);
+         return result.Id;
+      }
+
+
+      public async Task<IReadOnlyCollection<AclEntry>> GetSqlQueryAcl(string queryId)
+      {
+         // see https://redocly.github.io/redoc/?url=https://docs.microsoft.com/azure/databricks/_static/api-refs/queries-dashboards-2.0-azure.yaml#operation/get-sql-analytics-object-permissions
+
          var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlBase}/permissions/queries/{queryId}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
 
          GetAclResponse r = JsonSerializer.Deserialize<GetAclResponse>(rjson);
+
+         return r.Acl;
       }
 
+      public async Task SetSqlQueryAcl(string queryId, IEnumerable<AclEntry> acl)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlBase}/permissions/queries/{queryId}");
+         string jacl = JsonSerializer.Serialize(acl);
+         request.Content = new StringContent(jacl);
+         HttpResponseMessage response = await SendAsync(request);
+         await EnsureSuccessOrThrow(response);
+      }
+
+      public async Task TransferQueryOwnership(string queryId, string newOwnerEmail)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlBase}/permissions/query/{queryId}/transfer");
+         request.Content = new StringContent($"{{\"new_owner\": \"{newOwnerEmail}\"}}");
+         HttpResponseMessage response = await SendAsync(request);
+         await EnsureSuccessOrThrow(response);
+      }
+
+
       #region [ utility response classes ]
+
+      private async Task EnsureSuccessOrThrow(HttpResponseMessage response)
+      {
+         if(response.IsSuccessStatusCode)
+            return;
+
+         // read response body
+         string body = await response.Content.ReadAsStringAsync();
+         ErrorResponse jem = JsonSerializer.Deserialize<ErrorResponse>(body);
+
+         throw new HttpRequestException(
+            $"request failed with code {(int)response.StatusCode} '{response.StatusCode}'. {jem.Message}.");
+      }
 
       public class GetAclResponse
       {
@@ -374,7 +464,7 @@ namespace Stowage.Impl.Databricks
          public long Count { get; set; }
 
          [JsonPropertyName("results")]
-         public SqlQuery[] Results { get; set; }
+         public SqlQueryBase[] Results { get; set; }
       }
 
       public class WorkspaceLsRequest

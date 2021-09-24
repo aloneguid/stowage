@@ -15,5 +15,7 @@ namespace Stowage.Impl.Databricks
       /// </summary>
       [JsonPropertyName("permission_level")]
       public string PermissionLevel { get; set; }
+
+      public override string ToString() => $"{UserName ?? GroupName}: {PermissionLevel}";
    }
 }

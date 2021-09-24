@@ -6,8 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D00BF189-0CE1-4E4C-AED6-1DB5FA8E4A1A}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		..\.gitignore = ..\.gitignore
+		..\.github\workflows\full.yml = ..\.github\workflows\full.yml
 		..\README.md = ..\README.md
-		..\.github\workflows\release.yml = ..\.github\workflows\release.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stowage", "Stowage\Stowage.csproj", "{5DA26809-911E-41B8-833B-22B70B697E89}"

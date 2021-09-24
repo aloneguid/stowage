@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Config.Net;
 using Stowage.Impl.Databricks;
@@ -39,7 +40,15 @@ namespace Stowage.Test.Impl
       [Fact]
       public async Task SqlLs()
       {
-         await dbc.ListSqlQueries();
+         IReadOnlyCollection<SqlQueryBase> queries = await dbc.ListSqlQueries();
+
+         Assert.NotEmpty(queries);
+      }
+
+      [Fact]
+      public async Task TakeOwnership()
+      {
+         await dbc.TransferQueryOwnership("...", "...");
       }
    }
 }

@@ -27,6 +27,33 @@ namespace Stowage.Impl.Databricks
 
       Task<IReadOnlyCollection<ObjectInfo>> WorkspaceLs(IOPath path);
 
-      Task<IReadOnlyCollection<SqlQuery>> ListSqlQueries();
+      Task<IReadOnlyCollection<SqlQueryBase>> ListSqlQueries();
+
+      Task<string> GetSqlQueryRaw(string queryId);
+
+      Task<SqlQuery> GetSqlQuery(string queryId);
+
+      Task UpdateSqlQueryRaw(string queryId, string rawJson);
+
+      Task<string> CreateSqlQueryRaw(string rawJson);
+
+      Task<IReadOnlyCollection<AclEntry>> GetSqlQueryAcl(string queryId);
+
+      /// <summary>
+      /// Rewrites query ACL
+      /// </summary>
+      /// <param name="queryId"></param>
+      /// <param name="acl"></param>
+      /// <returns></returns>
+      Task SetSqlQueryAcl(string queryId, IEnumerable<AclEntry> acl);
+
+
+      /// <summary>
+      /// Transfer ownership of a query, as described in https://docs.microsoft.com/en-us/azure/databricks/sql/admin/transfer-ownership#--transfer-ownership-of-a-query
+      /// </summary>
+      /// <param name="queryId"></param>
+      /// <param name="newOwnerEmail"></param>
+      /// <returns></returns>
+      Task TransferQueryOwnership(string queryId, string newOwnerEmail);
    }
 }

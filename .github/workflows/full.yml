@@ -1,9 +1,8 @@
 name: Release
 
 env:
-  v: '1.0.0'
+  v: '1.0.2'
   av: '1.0.0'
-  pv: '1.0.1'
 
 on:
   push:
@@ -27,9 +26,9 @@ jobs:
     - name: Install dependencies
       run: dotnet restore src/Stowage.sln
     - name: Build
-      run: dotnet build src/Stowage.sln --configuration Release --no-restore /p:Version=${{ env.pv }} /p:FileVersion=${{ env.v }} /p:AssemblyVersion=${{ env.av }}
+      run: dotnet build src/Stowage.sln --configuration Release --no-restore /p:Version=${{ env.v }} /p:FileVersion=${{ env.v }} /p:AssemblyVersion=${{ env.av }}
     - name: Test
-      run: dotnet test src/Stowage.sln -c release --filter Category!=Integration --no-restore --verbosity normal /p:Version=${{ env.pv }} /p:FileVersion=${{ env.v }} /p:AssemblyVersion=${{ env.av }}
+      run: dotnet test src/Stowage.sln -c release --filter Category!=Integration --no-restore --verbosity normal /p:Version=${{ env.v }} /p:FileVersion=${{ env.v }} /p:AssemblyVersion=${{ env.av }}
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.1
       with:
@@ -45,7 +44,5 @@ jobs:
         uses: actions/download-artifact@v2.0.6
         with:
           name: packages
-      - name: test
-        run: ls -R
       - name: Push to nuget.org
         run: dotnet nuget push Stowage/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
