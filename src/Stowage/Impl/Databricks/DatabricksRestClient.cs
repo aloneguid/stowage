@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using NetBox.FileFormats.Ini;
 
 namespace Stowage.Impl.Databricks
 {
@@ -21,6 +22,41 @@ namespace Stowage.Impl.Databricks
       private readonly string _base;
       private readonly string _dbfsBase;
       private readonly string _sqlBase;
+
+      public DatabricksRestClient(string profileName) : this(new Uri(GetProfileHost(profileName)), GetProfileToken(profileName))
+      {
+      }
+
+      private static string GetProfileHost(string profileName)
+      {
+         GetProfileHostToken(profileName, out string host, out _);
+         return host;
+      }
+
+      private static string GetProfileToken(string profileName)
+      {
+         GetProfileHostToken(profileName, out _, out string token);
+         return token;
+      }
+
+      private static void GetProfileHostToken(string profileName, out string host, out string token)
+      {
+         host = Environment.GetEnvironmentVariable("DATABRICKS_HOST");
+         token = Environment.GetEnvironmentVariable("DATABRICKS_TOKEN");
+
+         if(host != null)
+            return;
+
+         string configPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".databrickscfg");
+         if(File.Exists(configPath))
+         {
+            var ini = StructuredIniFile.FromString(File.ReadAllText(configPath));
+            host = ini[$"{profileName}.host"];
+            token = ini[$"{profileName}.token"];
+         }
+      }
 
       public DatabricksRestClient(Uri instanceUri, string token) : base(instanceUri, new StaticAuthHandler(token))
       {

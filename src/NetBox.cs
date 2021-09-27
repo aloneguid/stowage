@@ -3,7 +3,7 @@
 | \ | | ___| |_| __ )  _____  __
 |  \| |/ _ \ __|  _ \ / _ \ \/ /
 | |\  |  __/ |_| |_) | (_) >  <
-|_| \_|\___|\__|____/ \___/_/\_\   v4.0.3 by @aloneguid
+|_| \_|\___|\__|____/ \___/_/\_\   v4.1.0 by @aloneguid
 
 https://github.com/aloneguid/netbox
 */
@@ -959,9 +959,9 @@ namespace NetBox.Generator
 }
 
 
-// FILE: src/NetBox/FileFormats/CsvFormat.cs
+// FILE: src/NetBox/FileFormats/Csv/CsvFormat.cs
 
-namespace NetBox.FileFormats
+namespace NetBox.FileFormats.Csv
 {
    static class CsvFormat
    {
@@ -1016,10 +1016,10 @@ namespace NetBox.FileFormats
 }
 
 
-// FILE: src/NetBox/FileFormats/CsvWriter.cs
+// FILE: src/NetBox/FileFormats/Csv/CsvWriter.cs
 
 
-namespace NetBox.FileFormats
+namespace NetBox.FileFormats.Csv
 {
    /// <summary>
    /// Writes data to a CSV file. Fast and reliable, supports:
@@ -1105,10 +1105,10 @@ namespace NetBox.FileFormats
 }
 
 
-// FILE: src/NetBox/FileFormats/CsvReader.cs
+// FILE: src/NetBox/FileFormats/Csv/CsvReader.cs
 
 
-namespace NetBox.FileFormats
+namespace NetBox.FileFormats.Csv
 {
    /// <summary>
    /// Reads data from a CSV file. Fast and reliable, supports:
@@ -1377,6 +1377,351 @@ namespace NetBox.FileFormats
       {
          return ch == '\r' || ch == '\n';
       }
+   }
+}
+
+
+// FILE: src/NetBox/FileFormats/Ini/IniEntity.cs
+
+namespace NetBox.FileFormats.Ini
+{
+   abstract class IniEntity
+   {
+   }
+}
+
+
+// FILE: src/NetBox/FileFormats/Ini/IniKeyValue.cs
+
+
+namespace NetBox.FileFormats.Ini
+{
+   internal class IniKeyValue : IniEntity
+   {
+      public const string KeyValueSeparator = "=";
+
+      public IniKeyValue(string key, string value, string comment)
+      {
+         if(key == null) throw new ArgumentNullException(nameof(key));
+         Key = key;
+         Value = value;
+         Comment = comment == null ? null : new IniComment(comment);
+      }
+
+      public string Key { get; }
+
+      public string Value { get; set; }
+
+      public IniComment Comment { get; }
+
+      public static IniKeyValue FromLine(string line, bool parseInlineComments)
+      {
+         int idx = line.IndexOf(KeyValueSeparator, StringComparison.CurrentCulture);
+         if(idx == -1) return null;
+
+         string key = line.Substring(0, idx).Trim();
+         string value = line.Substring(idx + 1).Trim();
+         string comment = null;
+
+         if (parseInlineComments)
+         {
+            idx = value.LastIndexOf(IniComment.CommentSeparator, StringComparison.CurrentCulture);
+            if (idx != -1)
+            {
+               comment = value.Substring(idx + 1).Trim();
+               value = value.Substring(0, idx).Trim();
+            }
+         }
+
+         return new IniKeyValue(key, value, comment);
+      }
+
+      public override string ToString()
+      {
+         return $"{Value}";
+      }
+   }
+}
+
+
+// FILE: src/NetBox/FileFormats/Ini/IniComment.cs
+
+namespace NetBox.FileFormats.Ini
+{
+   class IniComment : IniEntity
+   {
+      public const string CommentSeparator = ";";
+
+      public IniComment(string value)
+      {
+         Value = value;
+      }
+
+      public string Value { get; set; }
+
+      public override string ToString() => Value;
+   }
+}
+
+
+// FILE: src/NetBox/FileFormats/Ini/IniSection.cs
+
+
+namespace NetBox.FileFormats.Ini
+{
+   class IniSection
+   {
+      public const string SectionKeySeparator = ".";
+
+      private readonly List<IniEntity> _entities = new List<IniEntity>();
+      private readonly Dictionary<string, IniKeyValue> _keyToValue = new Dictionary<string, IniKeyValue>();
+
+      /// <summary>
+      /// Section name
+      /// </summary>
+      public string Name { get; set; }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="name">Pass null to work with global section</param>
+      public IniSection(string name)
+      {
+         if(name != null)
+         {
+            if (name.StartsWith("[")) name = name.Substring(1);
+            if (name.EndsWith("]")) name = name.Substring(0, name.Length - 1);
+         }
+
+         Name = name;
+      }
+
+      public void Add(IniEntity entity)
+      {
+         _entities.Add(entity);
+
+         IniKeyValue ikv = entity as IniKeyValue;
+         if(ikv != null)
+         {
+            _keyToValue[ikv.Key] = ikv;
+         }
+      }
+
+      public IniKeyValue Set(string key, string value)
+      {
+         if(value == null)
+         {
+            IniKeyValue ikv;
+            if(_keyToValue.TryGetValue(key, out ikv))
+            {
+               _keyToValue.Remove(key);
+               return ikv;
+            }
+            return null;
+         }
+         else
+         {
+            IniKeyValue ikv;
+            if(_keyToValue.TryGetValue(key, out ikv))
+            {
+               ikv.Value = value;
+            }
+            else
+            {
+               ikv = new IniKeyValue(key, value, null);
+               Add(ikv);
+            }
+            return ikv;
+         }
+      }
+
+      public static void SplitKey(string fullKey, out string sectionName, out string keyName)
+      {
+         int idx = fullKey.IndexOf(SectionKeySeparator, StringComparison.CurrentCulture);
+
+         if(idx == -1)
+         {
+            sectionName = null;
+            keyName = fullKey;
+         }
+         else
+         {
+            sectionName = fullKey.Substring(0, idx);
+            keyName = fullKey.Substring(idx + 1);
+         }
+      }
+
+      public void WriteTo(StreamWriter writer)
+      {
+         foreach(IniEntity entity in _entities)
+         {
+            IniKeyValue ikv = entity as IniKeyValue;
+            if(ikv != null)
+            {
+               writer.Write($"{ikv.Key}{IniKeyValue.KeyValueSeparator}{ikv.Value}");
+               if(ikv.Comment != null)
+               {
+                  writer.Write(" ");
+                  writer.Write(IniComment.CommentSeparator);
+                  writer.Write(ikv.Comment.Value);
+               }
+               writer.WriteLine();
+               continue;
+            }
+
+            IniComment comment = entity as IniComment;
+            if(comment != null)
+            {
+               writer.Write(IniComment.CommentSeparator);
+               writer.WriteLine(comment.Value);
+            }
+         }
+      }
+
+      public override string ToString()
+      {
+         return Name;
+      }
+   }
+}
+
+
+// FILE: src/NetBox/FileFormats/Ini/StructuredIniFile.cs
+
+
+namespace NetBox.FileFormats.Ini
+{
+   class StructuredIniFile
+   {
+      private const string _sectionBegin = "[";
+      private const string _sectionEnd = "]";
+      private static readonly char[] _sectionTrims = {'[', ']'};
+
+      private readonly IniSection _globalSection;
+      private readonly List<IniSection> _sections = new List<IniSection>();
+      private readonly Dictionary<string, IniKeyValue> _fullKeyNameToValue = new Dictionary<string, IniKeyValue>(StringComparer.InvariantCultureIgnoreCase);
+
+      public StructuredIniFile()
+      {
+         _globalSection = new IniSection(null);
+         _sections.Add(_globalSection);
+      }
+
+      public string this[string key]
+      {
+         get
+         {
+            if(key == null) return null;
+
+            IniKeyValue value;
+            return !_fullKeyNameToValue.TryGetValue(key, out value) ? null : value.Value;
+         }
+         set
+         {
+            if(key == null) return;
+
+            string sectionName;
+            string keyName;
+            IniSection.SplitKey(key, out sectionName, out keyName);
+            IniSection section = sectionName == null
+               ? _globalSection
+               : _sections.FirstOrDefault(s => s.Name == sectionName);
+            if(section == null)
+            {
+               section = new IniSection(sectionName);
+               _sections.Add(section);
+            }
+            IniKeyValue ikv = section.Set(keyName, value);
+
+            //update the local cache
+            if(ikv != null)
+            {
+               if(value == null)
+               {
+                  _fullKeyNameToValue.Remove(key);
+               }
+               else
+               {
+                  _fullKeyNameToValue[key] = ikv;
+               }
+            }
+         }
+      }
+
+      public static StructuredIniFile FromString(string content, bool parseInlineComments = true)
+      {
+         using (Stream input = new MemoryStream(Encoding.UTF8.GetBytes(content)))
+         {
+            return FromStream(input, parseInlineComments);
+         }
+      }
+
+      public static StructuredIniFile FromStream(Stream inputStream, bool parseInlineComments = true)
+      {
+         if(inputStream == null) throw new ArgumentNullException(nameof(inputStream));
+
+         var file = new StructuredIniFile();
+
+         using(var reader = new StreamReader(inputStream))
+         {
+            IniSection section = file._globalSection;
+
+            string line;
+            while((line = reader.ReadLine()) != null)
+            {
+               line = line.Trim();
+
+               if(line.StartsWith(_sectionBegin))
+               {
+                  //start new section
+                  line = line.Trim();
+                  section = new IniSection(line);
+                  file._sections.Add(section);
+               }
+               else if(line.StartsWith(IniComment.CommentSeparator))
+               {
+                  //whole line is a comment
+                  string comment = line.Substring(1).Trim();
+                  section.Add(new IniComment(comment));
+               }
+               else
+               {
+                  IniKeyValue ikv = IniKeyValue.FromLine(line, parseInlineComments);
+                  if(ikv == null) continue;
+
+                  section.Add(ikv);
+                  string fullKey = section.Name == null
+                     ? ikv.Key
+                     : $"{section.Name}{IniSection.SectionKeySeparator}{ikv.Key}";
+                  file._fullKeyNameToValue[fullKey] = ikv;
+
+               }
+            }
+         }
+
+         return file;
+      }
+
+      public void WriteTo(Stream outputStream)
+      {
+         if(outputStream == null) throw new ArgumentNullException(nameof(outputStream));
+
+         using(var writer = new StreamWriter(outputStream))
+         {
+            foreach(IniSection section in _sections)
+            {
+               if(section.Name != null)
+               {
+                  writer.WriteLine();
+                  writer.WriteLine($"{_sectionBegin}{section.Name}{_sectionEnd}");
+               }
+
+               section.WriteTo(writer);
+            }
+         }
+      }
+
+      //private static 
    }
 }
 

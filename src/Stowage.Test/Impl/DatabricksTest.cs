@@ -19,6 +19,8 @@ namespace Stowage.Test.Impl
             .Build();
 
          dbc = (IDatabricksClient)Files.Of.DatabricksDbfs(settings.DatabricksBaseUri, settings.DatabricksToken);
+
+         //IFileStorage dbc1 = Files.Of.DatabricksDbfsFromLocalProfile();
       }
 
       [Fact]

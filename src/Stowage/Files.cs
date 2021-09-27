@@ -88,6 +88,18 @@ namespace Stowage
          return new DatabricksRestClient(workspaceUri, token);
       }
 
+      /// <summary>
+      /// Constructs instance from the local profile. First looks at environment variables DATABRICKS_HOST and DATABRICKS_TOKEN.
+      /// If found, takes them. Otherwise tries to look at local profile (~/.databrickscfg). Fails when nothing found.
+      /// </summary>
+      /// <param name="_"></param>
+      /// <param name="profileName"></param>
+      /// <returns></returns>
+      public static IFileStorage DatabricksDbfsFromLocalProfile(this IFilesFactory _, string profileName = "DEFAULT")
+      {
+         return new DatabricksRestClient(profileName);
+      }
+
       // todo: log callback
       public static void SetLogger(Action<string> logMessage)
       {

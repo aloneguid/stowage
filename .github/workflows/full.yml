@@ -1,7 +1,7 @@
 name: Release
 
 env:
-  v: '1.0.2'
+  v: '1.0.3'
   av: '1.0.0'
 
 on:
