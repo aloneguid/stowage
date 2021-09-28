@@ -14,15 +14,13 @@ namespace Stowage
 
       protected PolyfilledHttpFileStorage(Uri baseAddress, DelegatingHandler authHandler)
       {
-         var fv = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
-
          _http = new HttpClient(authHandler)
          {
             BaseAddress = baseAddress,
             DefaultRequestHeaders = {
                {
                   "User-Agent",
-                  string.Format(Constants.UserAgent, fv.FileMajorPart, fv.FileMinorPart, fv.FileBuildPart)
+                  Constants.UserAgent
                }
             }
          };
