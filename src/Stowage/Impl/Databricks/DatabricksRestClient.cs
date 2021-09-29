@@ -297,6 +297,30 @@ namespace Stowage.Impl.Databricks
          return JsonSerializer.Deserialize<RunsListResponse>(rjson);
       }
 
+      public async Task<long> CreateJob(string jobJson)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_base}/jobs/create");
+         request.Content = new StringContent(jobJson);
+         HttpResponseMessage response = await SendAsync(request);
+         await EnsureSuccessOrThrow(response);
+         string rjson = await response.Content.ReadAsStringAsync();
+         return JsonSerializer.Deserialize<CreateJobResponse>(rjson).JobId;
+      }
+
+      public async Task ResetJob(long jobId, string jobJson)
+      {
+         var requestDict = new Dictionary<string, object>();
+         Dictionary<string, object> jobDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jobJson);
+         requestDict["job_id"] = jobId;
+         requestDict["new_settings"] = jobDict;
+         string requestJson = JsonSerializer.Serialize(requestDict);
+
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_base}/jobs/reset");
+         request.Content = new StringContent(requestJson);
+         HttpResponseMessage response = await SendAsync(request);
+         await EnsureSuccessOrThrow(response);
+      }
+
       public async Task<IReadOnlyCollection<ClusterInfo>> ListAllClusters()
       {
          var request = new HttpRequestMessage(HttpMethod.Get, $"{_base}/clusters/list");
@@ -308,7 +332,7 @@ namespace Stowage.Impl.Databricks
 
          return (lst == null || lst.Clusters == null || lst.Clusters.Length == 0)
             ? new ClusterInfo[0]
-            : lst.Clusters.Where(i => i.Source == "UI" || i.Source == "API").ToArray();
+            : lst.Clusters.ToArray();
 
       }
 
@@ -537,6 +561,12 @@ namespace Stowage.Impl.Databricks
       {
          [JsonPropertyName("events")]
          public ClusterEvent[] Events { get; set; }
+      }
+
+      public class CreateJobResponse
+      {
+         [JsonPropertyName("job_id")]
+         public long JobId { get; set; }
       }
 
       #endregion

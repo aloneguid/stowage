@@ -13,6 +13,10 @@ namespace Stowage.Impl.Databricks
 
       Task CancelRun(long runId);
 
+      Task<long> CreateJob(string jobJson);
+
+      Task ResetJob(long jobId, string jobJson);
+
       Task<IReadOnlyCollection<ClusterInfo>> ListAllClusters();
 
       Task<ClusterInfo> LoadCluster(string clusterId);

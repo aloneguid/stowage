@@ -53,5 +53,27 @@ namespace Stowage.Test.Impl
       {
          await dbc.TransferQueryOwnership("...", "...");
       }
+
+      const string JobJson = @"{
+   ""name"": ""my first job"",
+  ""new_cluster"": {
+    ""spark_version"": ""7.3.x-scala2.12"",
+    ""node_type_id"": ""Standard_D3_v2"",
+    ""num_workers"": 0,
+    ""custom_tags"": {
+      ""ResourceClass"": ""SingleNode""
+    }
+  }
+}
+";
+
+      [Fact]
+      public async Task CreateAndUpdateJob()
+      {
+         long jobId = await dbc.CreateJob(JobJson);
+         Assert.True(jobId > 0);
+
+         await dbc.ResetJob(jobId, JobJson.Replace("my first job", "my second job"));
+      }
    }
 }
