@@ -75,5 +75,13 @@ namespace Stowage.Test.Impl
 
          await dbc.ResetJob(jobId, JobJson.Replace("my first job", "my second job"));
       }
+
+      [Fact]
+      public async Task Scim()
+      {
+         await dbc.ScimSpList();
+
+         ScimUser me = await dbc.ScimWhoami();
+      }
    }
 }

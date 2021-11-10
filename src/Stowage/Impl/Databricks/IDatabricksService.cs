@@ -13,9 +13,9 @@ namespace Stowage.Impl.Databricks
 
       Task CancelRun(long runId);
 
-      Task<long> CreateJob(string jobJson);
+      Task<long> CreateJob(string jobJson, string apiVersion="2.0");
 
-      Task ResetJob(long jobId, string jobJson);
+      Task ResetJob(long jobId, string jobJson, string apiVersion = "2.0");
 
       Task<IReadOnlyCollection<ClusterInfo>> ListAllClusters();
 
@@ -59,5 +59,13 @@ namespace Stowage.Impl.Databricks
       /// <param name="newOwnerEmail"></param>
       /// <returns></returns>
       Task TransferQueryOwnership(string queryId, string newOwnerEmail);
+
+      /// <summary>
+      /// Gets current user using SCIM API
+      /// </summary>
+      /// <returns></returns>
+      Task<ScimUser> ScimWhoami();
+
+      Task ScimSpList();
    }
 }

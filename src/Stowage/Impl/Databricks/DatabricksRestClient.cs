@@ -19,9 +19,12 @@ namespace Stowage.Impl.Databricks
    sealed class DatabricksRestClient
         : PolyfilledHttpFileStorage, IDatabricksClient
    {
-      private readonly string _base;
+      private readonly string _apiBase;
+      private readonly string _apiBase20;
+      private readonly string _apiBase21;
       private readonly string _dbfsBase;
       private readonly string _sqlBase;
+      private readonly string _scimBase;
 
       public DatabricksRestClient(string profileName) : this(new Uri(GetProfileHost(profileName)), GetProfileToken(profileName))
       {
@@ -60,9 +63,12 @@ namespace Stowage.Impl.Databricks
 
       public DatabricksRestClient(Uri instanceUri, string token) : base(instanceUri, new StaticAuthHandler(token))
       {
-         _base = instanceUri.ToString().TrimEnd('/') + "/api/2.0";
-         _dbfsBase = _base + "/dbfs";
-         _sqlBase = _base + "/preview/sql";
+         _apiBase = instanceUri.ToString().TrimEnd('/');
+         _apiBase20 = _apiBase + "/2.0";
+         _apiBase21 = _apiBase + "/2.1";
+         _dbfsBase = _apiBase20 + "/dbfs";
+         _sqlBase = _apiBase20 + "/preview/sql";
+         _scimBase = _apiBase20 + "/preview/scim/v2";
       }
 
       /// <summary>
@@ -232,7 +238,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task<IReadOnlyCollection<Job>> ListAllJobs(bool includeRuns)
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_base}/jobs/list");
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBase20}/jobs/list");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
@@ -259,7 +265,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task<Job> LoadJob(long jobId)
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_base}/jobs/get?job_id={jobId}");
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBase20}/jobs/get?job_id={jobId}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
@@ -272,7 +278,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task RunJobNow(long jobId)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_base}/jobs/run-now");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase20}/jobs/run-now");
          request.Content = new StringContent($"{{\"job_id\":{jobId}}}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
@@ -280,7 +286,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task CancelRun(long runId)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_base}/jobs/runs/cancel");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase20}/jobs/runs/cancel");
          request.Content = new StringContent($"{{\"run_id\":{runId}}}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
@@ -289,7 +295,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task<RunsListResponse> ListJobRuns(long jobId, int limit)
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_base}/jobs/runs/list?job_id={jobId}&limit={limit}");
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBase20}/jobs/runs/list?job_id={jobId}&limit={limit}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
@@ -297,9 +303,9 @@ namespace Stowage.Impl.Databricks
          return JsonSerializer.Deserialize<RunsListResponse>(rjson);
       }
 
-      public async Task<long> CreateJob(string jobJson)
+      public async Task<long> CreateJob(string jobJson, string apiVersion = "2.0")
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_base}/jobs/create");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase}/{apiVersion}/jobs/create");
          request.Content = new StringContent(jobJson);
          HttpResponseMessage response = await SendAsync(request);
          await EnsureSuccessOrThrow(response);
@@ -307,7 +313,7 @@ namespace Stowage.Impl.Databricks
          return JsonSerializer.Deserialize<CreateJobResponse>(rjson).JobId;
       }
 
-      public async Task ResetJob(long jobId, string jobJson)
+      public async Task ResetJob(long jobId, string jobJson, string apiVersion = "2.0")
       {
          var requestDict = new Dictionary<string, object>();
          Dictionary<string, object> jobDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jobJson);
@@ -315,7 +321,7 @@ namespace Stowage.Impl.Databricks
          requestDict["new_settings"] = jobDict;
          string requestJson = JsonSerializer.Serialize(requestDict);
 
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_base}/jobs/reset");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase}/{apiVersion}/jobs/reset");
          request.Content = new StringContent(requestJson);
          HttpResponseMessage response = await SendAsync(request);
          await EnsureSuccessOrThrow(response);
@@ -323,7 +329,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task<IReadOnlyCollection<ClusterInfo>> ListAllClusters()
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_base}/clusters/list");
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBase20}/clusters/list");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
@@ -338,7 +344,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task<ClusterInfo> LoadCluster(string clusterId)
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_base}/clusters/get?cluster_id={clusterId}");
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBase20}/clusters/get?cluster_id={clusterId}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
@@ -348,7 +354,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task StartCluster(string clusterId)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_base}/clusters/start");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase20}/clusters/start");
          request.Content = new StringContent($"{{\"cluster_id\":\"{clusterId}\"}}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
@@ -356,7 +362,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task RestartCluster(string clusterId)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_base}/clusters/restart");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase20}/clusters/restart");
          request.Content = new StringContent($"{{\"cluster_id\":\"{clusterId}\"}}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
@@ -365,7 +371,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task TerminateCluster(string clusterId)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_base}/clusters/delete");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase20}/clusters/delete");
          request.Content = new StringContent($"{{\"cluster_id\":\"{clusterId}\"}}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
@@ -373,7 +379,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task<IReadOnlyCollection<ClusterEvent>> ListClusterEvents(string clusterId)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_base}/clusters/events");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase20}/clusters/events");
          request.Content = new StringContent($"{{\"cluster_id\":\"{clusterId}\"}}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
@@ -386,7 +392,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task<IReadOnlyCollection<ObjectInfo>> WorkspaceLs(IOPath path)
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_base}/workspace/list");
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBase20}/workspace/list");
          request.Content = new StringContent(JsonSerializer.Serialize(new WorkspaceLsRequest { Path = path }));
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
@@ -496,6 +502,22 @@ namespace Stowage.Impl.Databricks
          await EnsureSuccessOrThrow(response);
       }
 
+      public async Task<ScimUser> ScimWhoami()
+      {
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_scimBase}/Me");
+         HttpResponseMessage response = await SendAsync(request);
+         response.EnsureSuccessStatusCode();
+         string rjson = await response.Content.ReadAsStringAsync();
+         return JsonSerializer.Deserialize<ScimUser>(rjson);
+      }
+
+      public async Task ScimSpList()
+      {
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_scimBase}/ServicePrincipals");
+         HttpResponseMessage response = await SendAsync(request);
+         response.EnsureSuccessStatusCode();
+         string rjson = await response.Content.ReadAsStringAsync();
+      }
 
       #region [ utility response classes ]
 
