@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
    <PropertyGroup>
-      <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net5.0</TargetFrameworks>
+      <TargetFrameworks>net6.0</TargetFrameworks>
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
       <RepositoryType>GitHub</RepositoryType>
       <NeutralLanguage />
@@ -19,15 +19,6 @@
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
    </PropertyGroup>
-
-
-   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-      <PackageReference Include="System.Text.Json" Version="5.0.2" />
-   </ItemGroup>
-
-   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-      <PackageReference Include="System.Text.Json" Version="5.0.2" />
-   </ItemGroup>
 
    <ItemGroup>
      <Compile Include="..\NetBox.cs" Link="NetBox.cs" />

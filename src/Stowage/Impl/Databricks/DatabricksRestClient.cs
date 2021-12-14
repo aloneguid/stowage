@@ -63,7 +63,7 @@ namespace Stowage.Impl.Databricks
 
       public DatabricksRestClient(Uri instanceUri, string token) : base(instanceUri, new StaticAuthHandler(token))
       {
-         _apiBase = instanceUri.ToString().TrimEnd('/');
+         _apiBase = instanceUri.ToString().TrimEnd('/') + "/api";
          _apiBase20 = _apiBase + "/2.0";
          _apiBase21 = _apiBase + "/2.1";
          _dbfsBase = _apiBase20 + "/dbfs";
