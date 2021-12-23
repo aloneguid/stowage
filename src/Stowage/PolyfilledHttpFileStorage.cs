@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Stowage
@@ -38,6 +39,45 @@ namespace Stowage
 #else
          return _http.SendAsync(request).Result;
 #endif
+      }
+
+      protected async Task<T> PostAsync<T>(string url, object content = null, string stringBody = null, bool throwOnError = true)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Post, url);
+
+         if(content != null)
+         {
+            string rawJson = JsonSerializer.Serialize(content, content.GetType());
+            request.Content = new StringContent(rawJson);
+         }
+
+         if(stringBody != null)
+         {
+            request.Content = new StringContent(stringBody);
+         }
+
+         HttpResponseMessage response = await SendAsync(request);
+         if(throwOnError)
+         {
+            response.EnsureSuccessStatusCode();
+         }
+
+         string jsonString = await response.Content.ReadAsStringAsync();
+         return JsonSerializer.Deserialize<T>(jsonString);
+      }
+
+      protected async Task<T> GetAsync<T>(string url, bool throwOnError = true)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+         HttpResponseMessage response = await SendAsync(request);
+         if(throwOnError)
+         {
+            response.EnsureSuccessStatusCode();
+         }
+
+         string jsonString = await response.Content.ReadAsStringAsync();
+         return JsonSerializer.Deserialize<T>(jsonString);
       }
 
       public override void Dispose()

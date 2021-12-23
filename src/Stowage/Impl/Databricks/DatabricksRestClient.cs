@@ -20,6 +20,7 @@ namespace Stowage.Impl.Databricks
         : PolyfilledHttpFileStorage, IDatabricksClient
    {
       private readonly string _apiBase;
+      private readonly string _apiBase12;
       private readonly string _apiBase20;
       private readonly string _apiBase21;
       private readonly string _dbfsBase;
@@ -64,6 +65,7 @@ namespace Stowage.Impl.Databricks
       public DatabricksRestClient(Uri instanceUri, string token) : base(instanceUri, new StaticAuthHandler(token))
       {
          _apiBase = instanceUri.ToString().TrimEnd('/') + "/api";
+         _apiBase12 = _apiBase + "/1.2";
          _apiBase20 = _apiBase + "/2.0";
          _apiBase21 = _apiBase + "/2.1";
          _dbfsBase = _apiBase20 + "/dbfs";
@@ -519,6 +521,73 @@ namespace Stowage.Impl.Databricks
          string rjson = await response.Content.ReadAsStringAsync();
       }
 
+      public async Task<string> Exec(string clusterId, Language language, string command, Action<string> progressCallback)
+      {
+         string languageParam = language.ToString().ToLower();
+
+         // create execution context
+         ExecutionContextResponse context = await PostAsync<ExecutionContextResponse>(
+            $"{_apiBase12}/contexts/create",
+            new ExecutionContextRequest { ClusterId = clusterId, Language = languageParam });
+
+         if(progressCallback != null)
+            progressCallback("context created");
+
+         // wait till it's available
+         while(context.Status != "Running")
+         {
+            if(context.Status != null)
+            {
+               await Task.Delay(1000);
+            }
+
+            context = await GetAsync<ExecutionContextResponse>(
+               $"{_apiBase12}/contexts/status?clusterId={clusterId}&contextId={context.Id}");
+
+            if(progressCallback == null)
+               progressCallback($"context status: {context.Status}, id: {context.Id}");
+         }
+
+         // execute command
+         ExecutionContextResponse runningCommand = await PostAsync<ExecutionContextResponse>(
+            $"{_apiBase12}/commands/execute",
+            new ExecutionContextRequest
+            {
+               ClusterId = clusterId,
+               ContextId = context.Id,
+               Language = languageParam,
+               Command = command
+            });
+
+         if(progressCallback != null)
+            progressCallback($"command created, id: {runningCommand.Id}");
+
+         // wait till it's finished
+         while(runningCommand.Status != "Finished" && runningCommand.Status != "Error")
+         {
+            if(runningCommand.Status != null)
+               await Task.Delay(1000);
+
+            runningCommand = await GetAsync<ExecutionContextResponse>(
+               $"{_apiBase12}/commands/status?clusterId={clusterId}&contextId={context.Id}&commandId={runningCommand.Id}");
+
+            if(progressCallback != null)
+               progressCallback($"command status: {runningCommand.Status}");
+         }
+
+         // destroy context
+         await PostAsync<ExecutionContextResponse>(
+            $"{_apiBase12}/contexts/destroy",
+            new ExecutionContextRequest
+            {
+               ClusterId = clusterId,
+               ContextId = context.Id
+            });
+
+         return runningCommand.Results?.ToString();
+      }
+
+
       #region [ utility response classes ]
 
       private async Task EnsureSuccessOrThrow(HttpResponseMessage response)
@@ -589,6 +658,42 @@ namespace Stowage.Impl.Databricks
       {
          [JsonPropertyName("job_id")]
          public long JobId { get; set; }
+      }
+
+      public class ExecutionContextRequest
+      {
+         [JsonPropertyName("clusterId")]
+         public string ClusterId { get; set; }
+
+         [JsonPropertyName("contextId")]
+         public string ContextId { get; set; }
+
+         [JsonPropertyName("language")]
+         public string Language { get; set; }
+
+         [JsonPropertyName("command")]
+         public string Command { get; set; }
+
+         /// <summary>
+         /// An optional map of values used downstream. For example, a displayRowLimit override (used in testing).
+         /// </summary>
+         [JsonPropertyName("options")]
+         public string CommandOptions { get; set; }
+      }
+
+      public class ExecutionContextResponse
+      {
+         [JsonPropertyName("id")]
+         public string Id { get; set; }
+
+         [JsonPropertyName("status")]
+         public string Status { get; set; }
+
+         /// <summary>
+         /// Command execution results
+         /// </summary>
+         [JsonPropertyName("results")]
+         public object Results { get; set; }
       }
 
       #endregion

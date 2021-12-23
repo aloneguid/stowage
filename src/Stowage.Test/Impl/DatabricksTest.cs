@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Config.Net;
 using Stowage.Impl.Databricks;
@@ -82,6 +84,16 @@ namespace Stowage.Test.Impl
          await dbc.ScimSpList();
 
          ScimUser me = await dbc.ScimWhoami();
+      }
+
+      [Fact]
+      public async Task Exec()
+      {
+         //get first cluster
+         ClusterInfo cluster = (await dbc.ListAllClusters()).First();
+
+         // exec simple command
+         await dbc.Exec(cluster.Id, Language.Sql, "show databases", Console.WriteLine);
       }
    }
 }

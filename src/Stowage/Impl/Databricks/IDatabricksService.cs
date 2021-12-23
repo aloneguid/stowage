@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Stowage.Impl.Databricks
@@ -67,5 +68,7 @@ namespace Stowage.Impl.Databricks
       Task<ScimUser> ScimWhoami();
 
       Task ScimSpList();
+
+      Task<string> Exec(string clusterId, Language language, string command, Action<string> progressCallback);
    }
 }
