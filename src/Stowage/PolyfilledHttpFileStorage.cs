@@ -41,7 +41,11 @@ namespace Stowage
 #endif
       }
 
-      protected async Task<T> PostAsync<T>(string url, object content = null, string stringBody = null, bool throwOnError = true)
+      protected async Task<T> PostAsync<T>(string url,
+         object content = null,
+         string stringBody = null,
+         string contentType = null,
+         bool throwOnError = true)
       {
          var request = new HttpRequestMessage(HttpMethod.Post, url);
 
@@ -53,9 +57,21 @@ namespace Stowage
 
          if(stringBody != null)
          {
-            request.Content = new StringContent(stringBody);
+            request.Content = new StringContent(stringBody, null, contentType);
          }
 
+         HttpResponseMessage response = await SendAsync(request);
+         if(throwOnError)
+         {
+            response.EnsureSuccessStatusCode();
+         }
+
+         string jsonString = await response.Content.ReadAsStringAsync();
+         return JsonSerializer.Deserialize<T>(jsonString);
+      }
+
+      protected async Task<T> GetAsync<T>(HttpRequestMessage request, bool throwOnError = true)
+      {
          HttpResponseMessage response = await SendAsync(request);
          if(throwOnError)
          {
@@ -70,14 +86,7 @@ namespace Stowage
       {
          var request = new HttpRequestMessage(HttpMethod.Get, url);
 
-         HttpResponseMessage response = await SendAsync(request);
-         if(throwOnError)
-         {
-            response.EnsureSuccessStatusCode();
-         }
-
-         string jsonString = await response.Content.ReadAsStringAsync();
-         return JsonSerializer.Deserialize<T>(jsonString);
+         return await GetAsync<T>(request, throwOnError);
       }
 
       public override void Dispose()

@@ -32,9 +32,12 @@ namespace Stowage.Test.Integration
 
          switch(name)
          {
-            case "Azure":
+            case "AzureBlob":
                storage = Files.Of.AzureBlobStorage(settings.AzureStorageAccount, settings.AzureStorageKey, settings.AzureContainerName);
                break;
+            //case "AzureTable":
+            //   storage = Files.Of.AzureTableStorage(settings.AzureStorageAccount, settings.AzureStorageKey);
+            //   break;
             case "S3":
                storage = Files.Of.AmazonS3(settings.AwsBucket, settings.AwsKey, settings.AwsSecret, settings.AwsRegion);
                break;
@@ -74,10 +77,17 @@ namespace Stowage.Test.Integration
    {
       [Theory]
       [StorageTestData]
-      public Task Azure(string n, Func<Task> testMethod)
+      public Task AzureBlob(string n, Func<Task> testMethod)
       {
          return testMethod();
       }
+
+      //[Theory]
+      //[StorageTestData("/integration")]
+      //public Task AzureTable(string n, Func<Task> testMethod)
+      //{
+      //   return testMethod();
+      //}
    }
 
    public class MemIntegrationTest : BuiltInIntegrationsTest

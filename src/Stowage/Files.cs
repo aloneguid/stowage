@@ -62,6 +62,13 @@ namespace Stowage
          return new AzureBlobFileStorage(accountName, containerName, new SharedKeyAuthHandler(accountName, sharedKey));
       }
 
+      /*public static IFileStorage AzureTableStorage(
+         this IFilesFactory _, string accountName, string sharedKey)
+      {
+         return new AzureTableFileStorage(accountName,
+            new  SharedKeyAuthHandler(accountName, sharedKey, true));
+      }*/
+
       public static IFileStorage AmazonS3(this IFilesFactory _, string bucketName, string accessKeyId, string secretAccessKey, string region)
       {
          return new AwsS3FileStorage(
