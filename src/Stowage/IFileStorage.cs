@@ -39,6 +39,15 @@ namespace Stowage
 
       Task<string> ReadText(IOPath path, Encoding encoding = null, CancellationToken cancellationToken = default);
 
+      /// <summary>
+      /// Reads blob as utf-8 text, then uses <see cref="System.Text.Json"/> to deserialise as json object.
+      /// </summary>
+      /// <typeparam name="T"></typeparam>
+      /// <param name="path"></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      Task<T> ReadAsJson<T>(IOPath path, CancellationToken cancellationToken = default);
+
 
       /// <summary>
       /// Open blob for writing as a stream. You can keep writing to the stream for as long as you want - the data will be dumpted periodically to online storage.
@@ -52,6 +61,15 @@ namespace Stowage
       Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default);
 
       Task WriteText(IOPath path, string contents, Encoding encoding = null, CancellationToken cancellationToken = default);
+
+      /// <summary>
+      /// Uses <see cref="System.Text.Json"/> to first serialize the object, and then write it as utf-8 text.
+      /// </summary>
+      /// <param name="path"></param>
+      /// <param name="value">Object value to serialize.</param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      Task WriteAsJson(IOPath path, object value, CancellationToken cancellationToken = default);
 
       /// <summary>
       /// Deletes a single object by it's full path.

@@ -482,6 +482,22 @@ namespace Stowage.SelfTest
          }
       }
 
+      class TestObject
+      {
+         public string Name { get; set; }
+      }
+
+      [Test]
+      private async Task Json_Write_ReadsSameJson()
+      {
+         var t0 = new TestObject { Name = "name1" };
+         await _storage.WriteAsJson("1.json", t0);
+         TestObject t1 = await _storage.ReadAsJson<TestObject>("1.json");
+
+         if(t0.Name != t1.Name)
+            AssertFail(t0.Name, t1.Name);
+      }
+
       [Test]
       private async Task Rm_NullPath_ArgumentNullException()
       {

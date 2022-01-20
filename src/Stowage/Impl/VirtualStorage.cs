@@ -84,5 +84,7 @@ namespace Stowage.Impl
       }
 
       public Task Ren(IOPath name, IOPath newName, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public Task<T> ReadAsJson<T>(IOPath path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public Task WriteAsJson(IOPath path, object value, CancellationToken cancellationToken = default) => throw new NotImplementedException();
    }
 }

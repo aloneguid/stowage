@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,6 +30,17 @@ namespace Stowage
          await rs.CopyToAsync(ws);
       }
 
+      public async Task WriteAsJson(IOPath path, object value, CancellationToken cancellationToken = default)
+      {
+         if(path is null)
+            throw new ArgumentNullException(nameof(path));
+         if(value is null)
+            throw new ArgumentNullException(nameof(value));
+
+         string json = JsonSerializer.Serialize(value);
+         await WriteText(path, json);
+      }
+
       public abstract Task<Stream> OpenRead(IOPath path, CancellationToken cancellationToken = default);
 
       public virtual async Task<string> ReadText(IOPath path, Encoding encoding = null, CancellationToken cancellationToken = default)
@@ -52,6 +64,19 @@ namespace Stowage
          return (encoding ?? Encoding.UTF8).GetString(ms.ToArray());
 
       }
+
+      public async Task<T> ReadAsJson<T>(IOPath path, CancellationToken cancellationToken = default)
+      {
+         if(path is null)
+            throw new ArgumentNullException(nameof(path));
+
+         string json = await ReadText(path, null, cancellationToken);
+         if(json == null)
+            return default;
+
+         return JsonSerializer.Deserialize<T>(json);
+      }
+
 
       public abstract Task Rm(IOPath path, bool recurse = false, CancellationToken cancellationToken = default);
 
