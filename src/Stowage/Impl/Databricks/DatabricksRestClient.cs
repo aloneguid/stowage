@@ -434,7 +434,7 @@ namespace Stowage.Impl.Databricks
 
             result.AddRange(r.Results);
 
-            if(r.Count < pageSize)
+            if(r.Results.Length < pageSize)
                break;
          }
 
