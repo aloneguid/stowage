@@ -424,13 +424,13 @@ namespace Stowage.Impl.Databricks
       public async Task<IReadOnlyCollection<SqlDashboardBase>> ListSqlDashboards()
       {
          long pageNo = 0;
-         const long pageSize = 25;
+         const long pageSize = 50;
          var result = new List<SqlDashboardBase>();
 
          while(true)
          {
             ListSqlDashboardsResponse r = await GetAsync<ListSqlDashboardsResponse>(
-               $"{_sqlBase}/dashboards?page={++pageNo}&page_size=50");
+               $"{_sqlBase}/dashboards?page={++pageNo}&page_size={pageSize}");
 
             result.AddRange(r.Results);
 
