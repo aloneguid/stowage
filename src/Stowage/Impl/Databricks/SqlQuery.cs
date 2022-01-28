@@ -12,6 +12,8 @@ namespace Stowage.Impl.Databricks
 
       [JsonPropertyName("name")]
       public string Name { get; set; }
+
+      public override string ToString() => Name;
    }
 
    public class SqlQuery : SqlQueryBase
@@ -21,7 +23,5 @@ namespace Stowage.Impl.Databricks
 
       [JsonPropertyName("query")]
       public string SqlExpression { get; set; }
-
-      public override string ToString() => Name;
    }
 }

@@ -34,6 +34,8 @@ namespace Stowage.Impl.Databricks
 
       Task<IReadOnlyCollection<SqlQueryBase>> ListSqlQueries();
 
+      Task<IReadOnlyCollection<SqlDashboardBase>> ListSqlDashboards();
+
       Task<string> GetSqlQueryRaw(string queryId);
 
       Task<SqlQuery> GetSqlQuery(string queryId);
@@ -42,24 +44,9 @@ namespace Stowage.Impl.Databricks
 
       Task<string> CreateSqlQueryRaw(string rawJson);
 
-      Task<IReadOnlyCollection<AclEntry>> GetSqlQueryAcl(string queryId);
+      Task<IReadOnlyCollection<AclEntry>> GetAcl(SqlObjectType objectType, string objectId);
 
-      /// <summary>
-      /// Rewrites query ACL
-      /// </summary>
-      /// <param name="queryId"></param>
-      /// <param name="acl"></param>
-      /// <returns></returns>
-      Task SetSqlQueryAcl(string queryId, IEnumerable<AclEntry> acl);
-
-
-      /// <summary>
-      /// Transfer ownership of a query, as described in https://docs.microsoft.com/en-us/azure/databricks/sql/admin/transfer-ownership#--transfer-ownership-of-a-query
-      /// </summary>
-      /// <param name="queryId"></param>
-      /// <param name="newOwnerEmail"></param>
-      /// <returns></returns>
-      Task TransferQueryOwnership(string queryId, string newOwnerEmail);
+      Task SetAcl(SqlObjectType objectType, string objectId, IEnumerable<AclEntry> acl);
 
       /// <summary>
       /// Gets current user using SCIM API

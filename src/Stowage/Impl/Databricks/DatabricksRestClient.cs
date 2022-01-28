@@ -421,6 +421,27 @@ namespace Stowage.Impl.Databricks
          return result;
       }
 
+      public async Task<IReadOnlyCollection<SqlDashboardBase>> ListSqlDashboards()
+      {
+         long pageNo = 0;
+         const long pageSize = 25;
+         var result = new List<SqlDashboardBase>();
+
+         while(true)
+         {
+            ListSqlDashboardsResponse r = await GetAsync<ListSqlDashboardsResponse>(
+               $"{_sqlBase}/dashboards?page={++pageNo}&page_size=50");
+
+            result.AddRange(r.Results);
+
+            if(r.Count < pageSize)
+               break;
+         }
+
+         return result;
+      }
+
+
       private async Task<Tuple<IReadOnlyCollection<SqlQueryBase>, long>> ListSqlQueries(long pageNo, long pageSize)
       {
          // https://redocly.github.io/redoc/?url=https://docs.microsoft.com/azure/databricks/_static/api-refs/queries-dashboards-2.0-azure.yaml#operation/sql-analytics-get-queries
@@ -473,11 +494,22 @@ namespace Stowage.Impl.Databricks
       }
 
 
-      public async Task<IReadOnlyCollection<AclEntry>> GetSqlQueryAcl(string queryId)
+      private static string ToString(SqlObjectType t) => t switch
+      {
+         // https://redocly.github.io/redoc/?url=https://docs.microsoft.com/azure/databricks/_static/api-refs/queries-dashboards-2.0-azure.yaml#operation/get-sql-analytics-object-permissions
+
+         SqlObjectType.Query => "queries",
+         SqlObjectType.Dashboard => "dashboards",
+         SqlObjectType.Alert => "alerts",
+         SqlObjectType.DataSource => "data_sources",
+         _ => throw new NotImplementedException()
+      };
+
+      public async Task<IReadOnlyCollection<AclEntry>> GetAcl(SqlObjectType objectType, string queryId)
       {
          // see https://redocly.github.io/redoc/?url=https://docs.microsoft.com/azure/databricks/_static/api-refs/queries-dashboards-2.0-azure.yaml#operation/get-sql-analytics-object-permissions
 
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlBase}/permissions/queries/{queryId}");
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlBase}/permissions/{ToString(objectType)}/{queryId}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
@@ -487,19 +519,11 @@ namespace Stowage.Impl.Databricks
          return r.Acl;
       }
 
-      public async Task SetSqlQueryAcl(string queryId, IEnumerable<AclEntry> acl)
+      public async Task SetAcl(SqlObjectType objectType, string objectId, IEnumerable<AclEntry> acl)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlBase}/permissions/queries/{queryId}");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlBase}/permissions/{ToString(objectType)}/{objectId}");
          string jacl = JsonSerializer.Serialize(acl);
          request.Content = new StringContent(jacl);
-         HttpResponseMessage response = await SendAsync(request);
-         await EnsureSuccessOrThrow(response);
-      }
-
-      public async Task TransferQueryOwnership(string queryId, string newOwnerEmail)
-      {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlBase}/permissions/query/{queryId}/transfer");
-         request.Content = new StringContent($"{{\"new_owner\": \"{newOwnerEmail}\"}}");
          HttpResponseMessage response = await SendAsync(request);
          await EnsureSuccessOrThrow(response);
       }
@@ -616,6 +640,15 @@ namespace Stowage.Impl.Databricks
 
          [JsonPropertyName("results")]
          public SqlQueryBase[] Results { get; set; }
+      }
+
+      public class ListSqlDashboardsResponse
+      {
+         [JsonPropertyName("count")]
+         public long Count { get; set; }
+
+         [JsonPropertyName("results")]
+         public SqlDashboardBase[] Results { get; set; }
       }
 
       public class WorkspaceLsRequest

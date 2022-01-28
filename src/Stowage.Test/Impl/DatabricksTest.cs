@@ -51,9 +51,22 @@ namespace Stowage.Test.Impl
       }
 
       [Fact]
+      public async Task DashLs()
+      {
+         IReadOnlyCollection<SqlDashboardBase> dashboards = await dbc.ListSqlDashboards();
+      }
+
+      [Fact]
       public async Task TakeOwnership()
       {
-         await dbc.TransferQueryOwnership("...", "...");
+         IReadOnlyCollection<SqlQueryBase> queries = await dbc.ListSqlQueries();
+
+         IReadOnlyCollection<AclEntry> acl = await dbc.GetAcl(SqlObjectType.Query, queries.First().Id);
+
+         // keep only the first entry (for test purposes)
+
+         
+
       }
 
       const string JobJson = @"{

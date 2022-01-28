@@ -79,6 +79,7 @@ namespace Stowage
          }
 
          string jsonString = await response.Content.ReadAsStringAsync();
+
          return JsonSerializer.Deserialize<T>(jsonString);
       }
 
