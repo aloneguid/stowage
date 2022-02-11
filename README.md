@@ -1,7 +1,7 @@
-﻿﻿﻿﻿﻿﻿﻿﻿# Stowage [![Nuget](https://img.shields.io/nuget/v/Stowage?style=for-the-badge)](https://www.nuget.org/packages/Stowage)
+﻿﻿﻿﻿﻿﻿﻿﻿﻿# Stowage [![Nuget](https://img.shields.io/nuget/v/Stowage?style=for-the-badge)](https://www.nuget.org/packages/Stowage)
 
 
-![](media/icon/icon-64.png)
+![](media/icon/icon-256.png)
 
 **Stowage** is a **bloat-free .NET cloud storage kit** that supports at minimum THE major ☁ providers.
 
