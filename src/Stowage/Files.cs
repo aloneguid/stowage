@@ -6,7 +6,7 @@ using Stowage.Impl.Databricks;
 using Stowage.Impl.Google;
 using Stowage.Impl.Microsoft;
 
-[assembly: InternalsVisibleTo("Stowage.Test")]
+[assembly: InternalsVisibleTo("Stowage.Test, PublicKey=00240000048000009400000006020000002400005253413100040000010001001586d122f32211df78c3f502f97879e8ded0d3a9a2b1eb36cc9606730cf0905ab3a15b8045bd5691784302ab0c818b59b839ecb186ac92e4892469e648b43ffe45a2c68681a56bddd0002f0543713214c37451d5309930b911f1c910731da6297b7f1a607a49f43f99c790efe81308267d7c8d3cc3f10fcd3efaa64f23409cac")]
 
 namespace Stowage
 {

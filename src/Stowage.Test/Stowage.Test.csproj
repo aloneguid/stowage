@@ -2,8 +2,9 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0</TargetFrameworks>
-
+     <AssemblyOriginatorKeyFile>../fake.snk</AssemblyOriginatorKeyFile>
     <IsPackable>false</IsPackable>
+    <SignAssembly>True</SignAssembly>
   </PropertyGroup>
 
   <ItemGroup>
