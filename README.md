@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿# Stowage [![Nuget](https://img.shields.io/nuget/v/Stowage?style=for-the-badge)](https://www.nuget.org/packages/Stowage)
+﻿# Stowage [![Nuget](https://img.shields.io/nuget/v/Stowage?style=for-the-badge)](https://www.nuget.org/packages/Stowage)
 
 
 ![](media/icon/icon-256.png)
