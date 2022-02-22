@@ -39,6 +39,15 @@ namespace Stowage.Impl.Databricks
       [JsonPropertyName("entitlements")]
       public Entitlement[] Entitlements { get; set; }
 
+      public class Group
+      {
+         [JsonPropertyName("display")]
+         public string Display { get; set; }
+      }
+
+      [JsonPropertyName("groups")]
+      public Group[] Groups { get; set; }
+
       public override string ToString() => $"{DisplayName} ({UserName})";
    }
 }

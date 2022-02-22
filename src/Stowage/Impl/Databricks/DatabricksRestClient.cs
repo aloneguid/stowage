@@ -545,6 +545,14 @@ namespace Stowage.Impl.Databricks
          string rjson = await response.Content.ReadAsStringAsync();
       }
 
+      public async Task<IReadOnlyCollection<ScimUser>> ScimLsUsers()
+      {
+         // single request actually lists all the users
+         GetScimUsersResponse response = await GetAsync<GetScimUsersResponse>($"{_scimBase}/Users");
+
+         return response.Resources;
+      }
+
       public async Task<string> Exec(string clusterId, Language language, string command, Action<string> progressCallback)
       {
          string languageParam = language.ToString().ToLower();
@@ -727,6 +735,21 @@ namespace Stowage.Impl.Databricks
          /// </summary>
          [JsonPropertyName("results")]
          public object Results { get; set; }
+      }
+
+      public class GetScimUsersResponse
+      {
+         [JsonPropertyName("totalResults")]
+         public long TotalResults { get; set; }
+
+         [JsonPropertyName("startIndex")]
+         public long StartIndex { get; set; }
+
+         [JsonPropertyName("itemsPerPage")]
+         public long ItemsPerPage { get; set; }
+
+         [JsonPropertyName("Resources")]
+         public ScimUser[] Resources { get; set; }
       }
 
       #endregion

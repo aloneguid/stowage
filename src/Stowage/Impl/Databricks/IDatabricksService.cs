@@ -54,6 +54,8 @@ namespace Stowage.Impl.Databricks
       /// <returns></returns>
       Task<ScimUser> ScimWhoami();
 
+      Task<IReadOnlyCollection<ScimUser>> ScimLsUsers();
+
       Task ScimSpList();
 
       Task<string> Exec(string clusterId, Language language, string command, Action<string> progressCallback);

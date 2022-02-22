@@ -97,6 +97,8 @@ namespace Stowage.Test.Impl
          await dbc.ScimSpList();
 
          ScimUser me = await dbc.ScimWhoami();
+
+         IReadOnlyCollection<ScimUser> users = await dbc.ScimLsUsers();
       }
 
       [Fact]
