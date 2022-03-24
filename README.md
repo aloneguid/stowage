@@ -125,7 +125,7 @@ When contributing a new provider, it's way more preferrable to embed it's code i
 - there are no extra nuget dependencies.
 - it's cross-platform.
 
-I'm a strong opponent of simplicity and not going to repeat the mistake of turning this into a nuget tree dependency hell!
+I'm a strong advocate of simplicity and not going to repeat the mistake of turning this into a nuget tree dependency hell!
 
 ## ❔ Who?
 
