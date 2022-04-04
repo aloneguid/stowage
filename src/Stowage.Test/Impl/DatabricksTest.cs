@@ -61,10 +61,14 @@ namespace Stowage.Test.Impl
       {
          IReadOnlyCollection<SqlQueryBase> queries = await dbc.ListSqlQueries();
 
+         string qs = await dbc.GetSqlQueryRaw(queries.First().Id);
+         SqlQuery q = await dbc.GetSqlQuery(queries.First().Id);
+
          IReadOnlyCollection<AclEntry> acl = await dbc.GetAcl(SqlObjectType.Query, queries.First().Id);
 
          // keep only the first entry (for test purposes)
 
+         IReadOnlyCollection<SqlEndpoint> endpoints = await dbc.ListSqlEndpoints();
          
 
       }

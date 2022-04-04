@@ -36,6 +36,8 @@ namespace Stowage.Impl.Databricks
 
       Task<IReadOnlyCollection<SqlDashboardBase>> ListSqlDashboards();
 
+      Task<IReadOnlyCollection<SqlEndpoint>> ListSqlEndpoints();
+
       Task<string> GetSqlQueryRaw(string queryId);
 
       Task<SqlQuery> GetSqlQuery(string queryId);

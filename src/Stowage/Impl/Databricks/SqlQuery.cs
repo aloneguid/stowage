@@ -23,5 +23,24 @@ namespace Stowage.Impl.Databricks
 
       [JsonPropertyName("query")]
       public string SqlExpression { get; set; }
+
+      [JsonPropertyName("is_archived")]
+      public bool IsArchived { get; set; }
+
+      [JsonPropertyName("is_draft")]
+      public bool IsDraft { get; set; }
+
+      [JsonPropertyName("created_at")]
+      public DateTimeOffset CreatedTime { get; set; }
+
+      [JsonPropertyName("updated_at")]
+      public DateTimeOffset UpdatedTime { get; set; }
+
+      /// <summary>
+      /// This is not the same as endpoint ID.
+      /// </summary>
+      [JsonPropertyName("data_source_id")]
+      public string DataSourceId { get; set; }
+
    }
 }

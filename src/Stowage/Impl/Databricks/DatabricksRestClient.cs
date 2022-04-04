@@ -24,6 +24,7 @@ namespace Stowage.Impl.Databricks
       private readonly string _apiBase20;
       private readonly string _apiBase21;
       private readonly string _dbfsBase;
+      private readonly string _sqlPreviewBase;
       private readonly string _sqlBase;
       private readonly string _scimBase;
 
@@ -69,7 +70,8 @@ namespace Stowage.Impl.Databricks
          _apiBase20 = _apiBase + "/2.0";
          _apiBase21 = _apiBase + "/2.1";
          _dbfsBase = _apiBase20 + "/dbfs";
-         _sqlBase = _apiBase20 + "/preview/sql";
+         _sqlPreviewBase = _apiBase20 + "/preview/sql";
+         _sqlBase = _apiBase20 + "/sql";
          _scimBase = _apiBase20 + "/preview/scim/v2";
       }
 
@@ -105,14 +107,17 @@ namespace Stowage.Impl.Databricks
          if((lr?.Files?.Length ?? 0) == 0)
             return;
 
-         var batch = lr.Files.Select(fi => new IOEntry(fi.IsDir ? fi.Path + "/" : fi.Path) { Size = fi.IsDir ? null : fi.FileSize }).ToList();
-         container.AddRange(batch);
-
-         if(recurse)
+         var batch = lr?.Files.Select(fi => new IOEntry(fi.IsDir ? fi.Path + "/" : fi.Path) { Size = fi.IsDir ? null : fi.FileSize }).ToList();
+         if(batch != null)
          {
-            foreach(IOEntry folder in batch.Where(e => e.Path.IsFolder))
+            container.AddRange(batch);
+
+            if(recurse)
             {
-               await Ls(folder.Path, container, recurse);
+               foreach(IOEntry folder in batch.Where(e => e.Path.IsFolder))
+               {
+                  await Ls(folder.Path, container, recurse);
+               }
             }
          }
       }
@@ -144,7 +149,7 @@ namespace Stowage.Impl.Databricks
          HttpResponseMessage response = Send(CreateReadRequest(path, offset, count));
          response.EnsureSuccessStatusCode();
          ReadResponse rr = JsonSerializer.Deserialize<ReadResponse>(response.Content.ReadAsStringAsync().Result);
-         return Convert.FromBase64String(rr.Base64EncodedData);
+         return rr == null ? null : Convert.FromBase64String(rr.Base64EncodedData);
       }
 
       public async Task<byte[]> ReadAsync(IOPath path, long offset, long count)
@@ -152,7 +157,7 @@ namespace Stowage.Impl.Databricks
          HttpResponseMessage response = await SendAsync(CreateReadRequest(path, offset, count));
          response.EnsureSuccessStatusCode();
          ReadResponse rr = JsonSerializer.Deserialize<ReadResponse>(await response.Content.ReadAsStringAsync());
-         return Convert.FromBase64String(rr.Base64EncodedData);
+         return rr == null ? null : Convert.FromBase64String(rr.Base64EncodedData);
       }
 
       public override async Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default)
@@ -430,7 +435,7 @@ namespace Stowage.Impl.Databricks
          while(true)
          {
             ListSqlDashboardsResponse r = await GetAsync<ListSqlDashboardsResponse>(
-               $"{_sqlBase}/dashboards?page={++pageNo}&page_size={pageSize}");
+               $"{_sqlPreviewBase}/dashboards?page={++pageNo}&page_size={pageSize}");
 
             result.AddRange(r.Results);
 
@@ -441,13 +446,24 @@ namespace Stowage.Impl.Databricks
          return result;
       }
 
+      public async Task<IReadOnlyCollection<SqlEndpoint>> ListSqlEndpoints()
+      {
+         // endpoints API: https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints
+
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlBase}/endpoints");
+         HttpResponseMessage response = await SendAsync(request);
+         response.EnsureSuccessStatusCode();
+         string rjson = await response.Content.ReadAsStringAsync();
+         ListEndpointsResponse r = JsonSerializer.Deserialize<ListEndpointsResponse>(rjson);
+         return r?.Endpoints ?? Array.Empty<SqlEndpoint>();
+      }
 
       private async Task<Tuple<IReadOnlyCollection<SqlQueryBase>, long>> ListSqlQueries(long pageNo, long pageSize)
       {
          // https://redocly.github.io/redoc/?url=https://docs.microsoft.com/azure/databricks/_static/api-refs/queries-dashboards-2.0-azure.yaml#operation/sql-analytics-get-queries
 
          // pages are 1 - based, not 0 like normal people!
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlBase}/queries?page={pageNo + 1}&page_size={pageSize}");
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlPreviewBase}/queries?page={pageNo + 1}&page_size={pageSize}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
@@ -459,7 +475,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task<string> GetSqlQueryRaw(string queryId)
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlBase}/queries/{queryId}");
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlPreviewBase}/queries/{queryId}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
@@ -475,7 +491,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task UpdateSqlQueryRaw(string queryId, string rawJson)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlBase}/queries/{queryId}");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlPreviewBase}/queries/{queryId}");
          request.Content = new StringContent(rawJson);
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
@@ -483,7 +499,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task<string> CreateSqlQueryRaw(string rawJson)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlBase}/queries");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlPreviewBase}/queries");
          request.Content = new StringContent(rawJson);
          HttpResponseMessage response = await SendAsync(request);
          await EnsureSuccessOrThrow(response);
@@ -508,8 +524,7 @@ namespace Stowage.Impl.Databricks
       public async Task<IReadOnlyCollection<AclEntry>> GetAcl(SqlObjectType objectType, string queryId)
       {
          // see https://redocly.github.io/redoc/?url=https://docs.microsoft.com/azure/databricks/_static/api-refs/queries-dashboards-2.0-azure.yaml#operation/get-sql-analytics-object-permissions
-
-         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlBase}/permissions/{ToString(objectType)}/{queryId}");
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlPreviewBase}/permissions/{ToString(objectType)}/{queryId}");
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
@@ -521,7 +536,7 @@ namespace Stowage.Impl.Databricks
 
       public async Task SetAcl(SqlObjectType objectType, string objectId, IEnumerable<AclEntry> acl)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlBase}/permissions/{ToString(objectType)}/{objectId}");
+         var request = new HttpRequestMessage(HttpMethod.Post, $"{_sqlPreviewBase}/permissions/{ToString(objectType)}/{objectId}");
          string jacl = JsonSerializer.Serialize(acl);
          request.Content = new StringContent(jacl);
          HttpResponseMessage response = await SendAsync(request);
@@ -648,6 +663,12 @@ namespace Stowage.Impl.Databricks
 
          [JsonPropertyName("results")]
          public SqlQueryBase[] Results { get; set; }
+      }
+
+      public class ListEndpointsResponse
+      {
+         [JsonPropertyName("endpoints")]
+         public SqlEndpoint[] Endpoints { get; set; }
       }
 
       public class ListSqlDashboardsResponse
