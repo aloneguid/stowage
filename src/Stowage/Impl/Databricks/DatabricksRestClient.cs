@@ -15,6 +15,7 @@ namespace Stowage.Impl.Databricks
    /// <summary>
    /// general: https://docs.microsoft.com/en-us/azure/databricks/dev-tools/api/latest/
    /// DBFS: https://docs.databricks.com/dev-tools/api/latest/dbfs.html
+   /// Databricks SQL (Analytics): https://docs.microsoft.com/en-us/azure/databricks/sql/api/
    /// </summary>
    sealed class DatabricksRestClient
         : PolyfilledHttpFileStorage, IDatabricksClient
@@ -243,7 +244,7 @@ namespace Stowage.Impl.Databricks
          return JsonSerializer.Deserialize<TResponse>(await httpResponse.Content.ReadAsStringAsync());
       }
 
-      public async Task<IReadOnlyCollection<Job>> ListAllJobs(bool includeRuns)
+      public async Task<IReadOnlyCollection<Job>> LsJobs(bool includeRuns)
       {
          var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBase20}/jobs/list");
          HttpResponseMessage response = await SendAsync(request);
@@ -270,7 +271,7 @@ namespace Stowage.Impl.Databricks
          return jobListResponse.Jobs.ToList();
       }
 
-      public async Task<Job> LoadJob(long jobId)
+      public async Task<Job> GetJob(long jobId)
       {
          var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBase20}/jobs/get?job_id={jobId}");
          HttpResponseMessage response = await SendAsync(request);
@@ -291,7 +292,7 @@ namespace Stowage.Impl.Databricks
          response.EnsureSuccessStatusCode();
       }
 
-      public async Task CancelRun(long runId)
+      public async Task CancelJobRun(long runId)
       {
          var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase20}/jobs/runs/cancel");
          request.Content = new StringContent($"{{\"run_id\":{runId}}}");
@@ -334,7 +335,7 @@ namespace Stowage.Impl.Databricks
          await EnsureSuccessOrThrow(response);
       }
 
-      public async Task<IReadOnlyCollection<ClusterInfo>> ListAllClusters()
+      public async Task<IReadOnlyCollection<ClusterInfo>> LsClusters()
       {
          var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBase20}/clusters/list");
          HttpResponseMessage response = await SendAsync(request);
@@ -384,7 +385,7 @@ namespace Stowage.Impl.Databricks
          response.EnsureSuccessStatusCode();
       }
 
-      public async Task<IReadOnlyCollection<ClusterEvent>> ListClusterEvents(string clusterId)
+      public async Task<IReadOnlyCollection<ClusterEvent>> LsClusterEvents(string clusterId)
       {
          var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase20}/clusters/events");
          request.Content = new StringContent($"{{\"cluster_id\":\"{clusterId}\"}}");
@@ -397,7 +398,7 @@ namespace Stowage.Impl.Databricks
          return evts.Events;
       }
 
-      public async Task<IReadOnlyCollection<ObjectInfo>> WorkspaceLs(IOPath path)
+      public async Task<IReadOnlyCollection<ObjectInfo>> LsWorkspace(IOPath path)
       {
          var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBase20}/workspace/list");
          request.Content = new StringContent(JsonSerializer.Serialize(new WorkspaceLsRequest { Path = path }));
@@ -409,24 +410,30 @@ namespace Stowage.Impl.Databricks
          return objs.Objects;
       }
 
-      public async Task<IReadOnlyCollection<SqlQueryBase>> ListSqlQueries()
+      public async Task<IReadOnlyCollection<SqlQuery>> LsSqlQueries(Func<long, long, Task> progress = null)
       {
          const long pageSize = 25;
          long pageNo = 0;
-         var result = new List<SqlQueryBase>();
+         var result = new List<SqlQuery>();
          long totalCount;
          do
          {
-            (IReadOnlyCollection<SqlQueryBase> queries, long totalCount1) = await ListSqlQueries(pageNo++, pageSize);
+            (IReadOnlyCollection<SqlQuery> queries, long totalCount1) = await ListSqlQueries(pageNo++, pageSize);
             totalCount = totalCount1;
             result.AddRange(queries);
+
+            if(progress != null)
+               await progress(result.Count, totalCount);
          }
          while(result.Count < totalCount);
+
+         if(progress != null)
+            await progress(totalCount, totalCount);
 
          return result;
       }
 
-      public async Task<IReadOnlyCollection<SqlDashboardBase>> ListSqlDashboards()
+      public async Task<IReadOnlyCollection<SqlDashboardBase>> LsSqlDashboards()
       {
          long pageNo = 0;
          const long pageSize = 50;
@@ -446,7 +453,7 @@ namespace Stowage.Impl.Databricks
          return result;
       }
 
-      public async Task<IReadOnlyCollection<SqlEndpoint>> ListSqlEndpoints()
+      public async Task<IReadOnlyCollection<SqlEndpoint>> LsSqlEndpoints()
       {
          // endpoints API: https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints
 
@@ -458,7 +465,7 @@ namespace Stowage.Impl.Databricks
          return r?.Endpoints ?? Array.Empty<SqlEndpoint>();
       }
 
-      private async Task<Tuple<IReadOnlyCollection<SqlQueryBase>, long>> ListSqlQueries(long pageNo, long pageSize)
+      private async Task<Tuple<IReadOnlyCollection<SqlQuery>, long>> ListSqlQueries(long pageNo, long pageSize)
       {
          // https://redocly.github.io/redoc/?url=https://docs.microsoft.com/azure/databricks/_static/api-refs/queries-dashboards-2.0-azure.yaml#operation/sql-analytics-get-queries
 
@@ -470,7 +477,7 @@ namespace Stowage.Impl.Databricks
 
          ListSqlQueriesResponse r = JsonSerializer.Deserialize<ListSqlQueriesResponse>(rjson);
 
-         return new Tuple<IReadOnlyCollection<SqlQueryBase>, long>(r.Results, r.Count);
+         return new Tuple<IReadOnlyCollection<SqlQuery>, long>(r.Results, r.Count);
       }
 
       public async Task<string> GetSqlQueryRaw(string queryId)
@@ -552,7 +559,7 @@ namespace Stowage.Impl.Databricks
          return JsonSerializer.Deserialize<ScimUser>(rjson);
       }
 
-      public async Task ScimSpList()
+      public async Task LsScimSp()
       {
          var request = new HttpRequestMessage(HttpMethod.Get, $"{_scimBase}/ServicePrincipals");
          HttpResponseMessage response = await SendAsync(request);
@@ -560,7 +567,7 @@ namespace Stowage.Impl.Databricks
          string rjson = await response.Content.ReadAsStringAsync();
       }
 
-      public async Task<IReadOnlyCollection<ScimUser>> ScimLsUsers()
+      public async Task<IReadOnlyCollection<ScimUser>> LsScimUsers()
       {
          // single request actually lists all the users
          GetScimUsersResponse response = await GetAsync<GetScimUsersResponse>($"{_scimBase}/Users");
@@ -662,7 +669,7 @@ namespace Stowage.Impl.Databricks
          public long Count { get; set; }
 
          [JsonPropertyName("results")]
-         public SqlQueryBase[] Results { get; set; }
+         public SqlQuery[] Results { get; set; }
       }
 
       public class ListEndpointsResponse

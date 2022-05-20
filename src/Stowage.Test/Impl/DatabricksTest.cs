@@ -28,7 +28,7 @@ namespace Stowage.Test.Impl
       [Fact]
       public async Task ListClusters()
       {
-         IReadOnlyCollection<ClusterInfo> clusters = await dbc.ListAllClusters();
+         IReadOnlyCollection<ClusterInfo> clusters = await dbc.LsClusters();
 
          Assert.NotEmpty(clusters);
       }
@@ -36,7 +36,7 @@ namespace Stowage.Test.Impl
       [Fact]
       public async Task WorkspaceLs()
       {
-         IReadOnlyCollection<ObjectInfo> objs = await dbc.WorkspaceLs("/");
+         IReadOnlyCollection<ObjectInfo> objs = await dbc.LsWorkspace("/");
 
          Assert.NotEmpty(objs);
 
@@ -45,7 +45,7 @@ namespace Stowage.Test.Impl
       [Fact]
       public async Task SqlLs()
       {
-         IReadOnlyCollection<SqlQueryBase> queries = await dbc.ListSqlQueries();
+         IReadOnlyCollection<SqlQuery> queries = await dbc.LsSqlQueries();
 
          Assert.NotEmpty(queries);
       }
@@ -53,13 +53,13 @@ namespace Stowage.Test.Impl
       [Fact]
       public async Task DashLs()
       {
-         IReadOnlyCollection<SqlDashboardBase> dashboards = await dbc.ListSqlDashboards();
+         IReadOnlyCollection<SqlDashboardBase> dashboards = await dbc.LsSqlDashboards();
       }
 
       [Fact]
       public async Task TakeOwnership()
       {
-         IReadOnlyCollection<SqlQueryBase> queries = await dbc.ListSqlQueries();
+         IReadOnlyCollection<SqlQueryBase> queries = await dbc.LsSqlQueries();
 
          string qs = await dbc.GetSqlQueryRaw(queries.First().Id);
          SqlQuery q = await dbc.GetSqlQuery(queries.First().Id);
@@ -68,7 +68,7 @@ namespace Stowage.Test.Impl
 
          // keep only the first entry (for test purposes)
 
-         IReadOnlyCollection<SqlEndpoint> endpoints = await dbc.ListSqlEndpoints();
+         IReadOnlyCollection<SqlEndpoint> endpoints = await dbc.LsSqlEndpoints();
          
 
       }
@@ -98,18 +98,18 @@ namespace Stowage.Test.Impl
       [Fact]
       public async Task Scim()
       {
-         await dbc.ScimSpList();
+         await dbc.LsScimSp();
 
          ScimUser me = await dbc.ScimWhoami();
 
-         IReadOnlyCollection<ScimUser> users = await dbc.ScimLsUsers();
+         IReadOnlyCollection<ScimUser> users = await dbc.LsScimUsers();
       }
 
       [Fact]
       public async Task Exec()
       {
          //get first cluster
-         ClusterInfo cluster = (await dbc.ListAllClusters()).First();
+         ClusterInfo cluster = (await dbc.LsClusters()).First();
 
          // exec simple command
          await dbc.Exec(cluster.Id, Language.Sql, "show databases", Console.WriteLine);

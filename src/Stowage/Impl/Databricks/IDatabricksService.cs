@@ -6,19 +6,19 @@ namespace Stowage.Impl.Databricks
 {
    public interface IDatabricksClient
    {
-      Task<IReadOnlyCollection<Job>> ListAllJobs(bool moreDetails);
+      Task<IReadOnlyCollection<Job>> LsJobs(bool moreDetails);
 
-      Task<Job> LoadJob(long jobId);
+      Task<Job> GetJob(long jobId);
 
       Task RunJobNow(long jobId);
 
-      Task CancelRun(long runId);
+      Task CancelJobRun(long runId);
 
       Task<long> CreateJob(string jobJson, string apiVersion="2.0");
 
       Task ResetJob(long jobId, string jobJson, string apiVersion = "2.0");
 
-      Task<IReadOnlyCollection<ClusterInfo>> ListAllClusters();
+      Task<IReadOnlyCollection<ClusterInfo>> LsClusters();
 
       Task<ClusterInfo> LoadCluster(string clusterId);
 
@@ -28,15 +28,15 @@ namespace Stowage.Impl.Databricks
 
       Task TerminateCluster(string clusterId);
 
-      Task<IReadOnlyCollection<ClusterEvent>> ListClusterEvents(string clusterId);
+      Task<IReadOnlyCollection<ClusterEvent>> LsClusterEvents(string clusterId);
 
-      Task<IReadOnlyCollection<ObjectInfo>> WorkspaceLs(IOPath path);
+      Task<IReadOnlyCollection<ObjectInfo>> LsWorkspace(IOPath path);
 
-      Task<IReadOnlyCollection<SqlQueryBase>> ListSqlQueries();
+      Task<IReadOnlyCollection<SqlQuery>> LsSqlQueries(Func<long, long, Task> progress = null);
 
-      Task<IReadOnlyCollection<SqlDashboardBase>> ListSqlDashboards();
+      Task<IReadOnlyCollection<SqlDashboardBase>> LsSqlDashboards();
 
-      Task<IReadOnlyCollection<SqlEndpoint>> ListSqlEndpoints();
+      Task<IReadOnlyCollection<SqlEndpoint>> LsSqlEndpoints();
 
       Task<string> GetSqlQueryRaw(string queryId);
 
@@ -56,9 +56,13 @@ namespace Stowage.Impl.Databricks
       /// <returns></returns>
       Task<ScimUser> ScimWhoami();
 
-      Task<IReadOnlyCollection<ScimUser>> ScimLsUsers();
+      Task<IReadOnlyCollection<ScimUser>> LsScimUsers();
 
-      Task ScimSpList();
+      /// <summary>
+      /// List Service Principals
+      /// </summary>
+      /// <returns></returns>
+      Task LsScimSp();
 
       Task<string> Exec(string clusterId, Language language, string command, Action<string> progressCallback);
    }

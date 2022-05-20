@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Stowage.Impl.Databricks
@@ -12,6 +10,9 @@ namespace Stowage.Impl.Databricks
 
       [JsonPropertyName("name")]
       public string Name { get; set; }
+
+      [JsonPropertyName("tags")]
+      public string[] Tags { get; set; }
 
       public override string ToString() => Name;
    }
