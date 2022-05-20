@@ -46,6 +46,11 @@ namespace Stowage.Impl.Databricks
 
       Task<string> CreateSqlQueryRaw(string rawJson);
 
+      /// <summary>
+      /// Moves query to trash (deleted after 30 days)
+      /// </summary>
+      Task DeleteSqlQuery(string queryId);
+
       Task<IReadOnlyCollection<AclEntry>> GetAcl(SqlObjectType objectType, string objectId);
 
       Task SetAcl(SqlObjectType objectType, string objectId, IEnumerable<AclEntry> acl);

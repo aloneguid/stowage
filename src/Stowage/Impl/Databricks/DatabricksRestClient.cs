@@ -516,6 +516,12 @@ namespace Stowage.Impl.Databricks
          return result.Id;
       }
 
+      public async Task DeleteSqlQuery(string queryId)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Delete, $"{_sqlPreviewBase}/queries/{queryId}");
+         HttpResponseMessage response = await SendAsync(request);
+         await EnsureSuccessOrThrow(response);
+      }
 
       private static string ToString(SqlObjectType t) => t switch
       {

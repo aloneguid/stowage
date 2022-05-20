@@ -48,6 +48,8 @@ namespace Stowage.Test.Impl
          IReadOnlyCollection<SqlQuery> queries = await dbc.LsSqlQueries();
 
          Assert.NotEmpty(queries);
+
+         await dbc.DeleteSqlQuery("06391d8e-fc42-4d19-8d95-4493cda52450");
       }
 
       [Fact]
