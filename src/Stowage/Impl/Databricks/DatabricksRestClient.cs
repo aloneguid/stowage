@@ -100,7 +100,10 @@ namespace Stowage.Impl.Databricks
          HttpResponseMessage response = await SendAsync(request);
          if(response.StatusCode == HttpStatusCode.NotFound)
             return;
-         response.EnsureSuccessStatusCode();
+         if(!response.IsSuccessStatusCode)
+         {
+            throw new IOException($"failed to list path {path}, response code: {response.StatusCode} ({response.ReasonPhrase})");
+         }
          string rjson = await response.Content.ReadAsStringAsync();
 
          ListResponse lr = JsonSerializer.Deserialize<ListResponse>(rjson);

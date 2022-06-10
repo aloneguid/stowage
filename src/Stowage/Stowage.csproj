@@ -16,6 +16,7 @@
       <PackageTags>storage aws s3 azure blob gcp google</PackageTags>
       <AssemblyOriginatorKeyFile>../fake.snk</AssemblyOriginatorKeyFile>
       <Nullable>warnings</Nullable>
+      <GenerateDocumentationFile>True</GenerateDocumentationFile>
    </PropertyGroup>
 
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">

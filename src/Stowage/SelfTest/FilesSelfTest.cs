@@ -364,6 +364,38 @@ namespace Stowage.SelfTest
             AssertFail(text, actual);
       }
 
+      [Test]
+      public async Task OpenWrite_Append_LargerAndLarger()
+      {
+         string path = $"/{nameof(OpenWrite_Append_LargerAndLarger)}.txt";
+
+         await _storage.Rm(path);
+
+         // write first chunk
+         using(Stream s = await _storage.OpenWrite(path, WriteMode.Append))
+         {
+            byte[] line1 = Encoding.UTF8.GetBytes("one");
+            await s.WriteAsync(line1, 0, line1.Length);
+         }
+
+         // validate
+         string content = await _storage.ReadText(path);
+         if(content != "one")
+            AssertFail("one", content);
+
+         // write second chunk
+         using(Stream s = await _storage.OpenWrite(path, WriteMode.Append))
+         {
+            byte[] line1 = Encoding.UTF8.GetBytes("two");
+            await s.WriteAsync(line1, 0, line1.Length);
+         }
+
+         // validate
+         content = await _storage.ReadText(path);
+         if(content != "onetwo")
+            AssertFail("onetwo", content);
+      }
+
 #if(NETSTANDARD2_1 || NETCOREAPP3_1_OR_GREATER)
       [Test]
       public async Task OpenWrite_WriteAsync_DisposeAsync_ReadsSameText()

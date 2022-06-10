@@ -25,7 +25,7 @@ namespace Stowage.Impl.Amazon
             throw new ArgumentException("path needs to be a folder", nameof(path));
 
          string delimiter = recurse ? null : "/";
-         string prefix = IOPath.IsRoot(path) ? null : path.NLWTS;
+         string prefix = IOPath.IsRoot(path) ? null : path?.NLWTS;
 
          // call https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
          string uri = "/?list-type=2";
@@ -84,6 +84,9 @@ namespace Stowage.Impl.Amazon
       {
          if(path is null)
             throw new ArgumentNullException(nameof(path));
+
+         if(mode == WriteMode.Append)
+            throw new NotSupportedException("S3 does NOT support native append mode (but azure blob storage does).");
 
          string npath = IOPath.Normalize(path, true);
 

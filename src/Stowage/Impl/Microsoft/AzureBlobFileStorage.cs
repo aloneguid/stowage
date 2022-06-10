@@ -139,7 +139,7 @@ namespace Stowage.Impl.Microsoft
          if(path is null)
             throw new ArgumentNullException(nameof(path));
 
-         return Task.FromResult<Stream>(new AzureWriteStream(this, GetContainerName(path), GetPathInContainer(path)));
+         return Task.FromResult<Stream>(new AzureWriteStream(this, GetContainerName(path), GetPathInContainer(path), mode));
       }
 
       private HttpRequestMessage CreatePutBlockRequest(int blockId, string containerName, string blobName, byte[] buffer, int count, out string blockIdStr)
@@ -152,6 +152,14 @@ namespace Stowage.Impl.Microsoft
          return request;
       }
 
+      private HttpRequestMessage CreateAppendBlockRequest(string containerName, string blobName, byte[] buffer, int count)
+      {
+         // call https://docs.microsoft.com/en-us/rest/api/storageservices/append-block
+         var request = new HttpRequestMessage(HttpMethod.Put, $"/{containerName}/{blobName}?comp=appendblock");
+         request.Content = new ByteArrayContent(buffer, 0, count);
+         return request;
+      }
+
       public string PutBlock(int blockId, string containerName, string blobName, byte[] buffer, int count)
       {
          HttpRequestMessage request = CreatePutBlockRequest(blockId, containerName, blobName, buffer, count, out string blockIdStr);
@@ -160,12 +168,31 @@ namespace Stowage.Impl.Microsoft
          return blockIdStr;
       }
 
+
+      public void AppendBlock(string containerName, string blobName, byte[] buffer, int count)
+      {
+         HttpRequestMessage request = CreateAppendBlockRequest(containerName, blobName, buffer, count);
+         HttpResponseMessage response = Send(request);
+         if(response.StatusCode == HttpStatusCode.NotFound)
+            throw new FileNotFoundException();
+         response.EnsureSuccessStatusCode();
+      }
+
       public async Task<string> PutBlockAsync(int blockId, string containerName, string blobName, byte[] buffer, int count)
       {
          HttpRequestMessage request = CreatePutBlockRequest(blockId, containerName, blobName, buffer, count, out string blockIdStr);
          HttpResponseMessage response = await SendAsync(request);
          response.EnsureSuccessStatusCode();
          return blockIdStr;
+      }
+
+      public async Task AppendBlockAsync(string containerName, string blobName, byte[] buffer, int count)
+      {
+         HttpRequestMessage request = CreateAppendBlockRequest(containerName, blobName, buffer, count);
+         HttpResponseMessage response = await SendAsync(request);
+         if(response.StatusCode == HttpStatusCode.NotFound)
+            throw new FileNotFoundException();
+         response.EnsureSuccessStatusCode();
       }
 
       private HttpRequestMessage CreatePutBlockListRequest(string containerName, string blobName, IEnumerable<string> blockIds)
@@ -204,11 +231,28 @@ namespace Stowage.Impl.Microsoft
          response.EnsureSuccessStatusCode();
       }
 
-      // https://docs.microsoft.com/en-us/rest/api/storageservices/put-blob
-      /*public async Task PutBlobAsync()
+      private HttpRequestMessage CreatePutBlobRequest(string containerName, string blobName, string blobType)
       {
-         
-      }*/
+         // https://docs.microsoft.com/en-us/rest/api/storageservices/put-blob
+
+         var request = new HttpRequestMessage(HttpMethod.Put, $"/{containerName}/{blobName}");
+         request.Content = new ByteArrayContent(new byte[0]);  // sets Content-Type to 0
+         request.Headers.Add("x-ms-blob-type", blobType);
+         return request;
+      }
+
+      
+      public async Task PutBlobAsync(string containerName, string blobName, string blobType = "BlockBlob")
+      {
+         HttpResponseMessage response = await SendAsync(CreatePutBlobRequest(containerName, blobName, blobType));
+         response.EnsureSuccessStatusCode();
+      }
+
+      public void PutBlob(string containerName, string blobName, string blobType = "BlockBlob")
+      {
+         HttpResponseMessage response = Send(CreatePutBlobRequest(containerName, blobName, blobType));
+         response.EnsureSuccessStatusCode();
+      }
 
       //todo: remove both, as we're scoped to containers
       private string GetContainerName(string path)

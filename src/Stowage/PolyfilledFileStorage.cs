@@ -25,7 +25,7 @@ namespace Stowage
          if(!path.IsFile)
             throw new ArgumentException($"{nameof(path)} needs to be a file", nameof(path));
 
-         using Stream ws = await OpenWrite(path, WriteMode.Create);
+         using Stream ws = await OpenWrite(path, WriteMode.Create, cancellationToken);
          Stream rs = contents.ToMemoryStream(encoding ?? Encoding.UTF8);
          await rs.CopyToAsync(ws);
       }
@@ -38,7 +38,7 @@ namespace Stowage
             throw new ArgumentNullException(nameof(value));
 
          string json = JsonSerializer.Serialize(value);
-         await WriteText(path, json);
+         await WriteText(path, json, null, cancellationToken);
       }
 
       public abstract Task<Stream> OpenRead(IOPath path, CancellationToken cancellationToken = default);
