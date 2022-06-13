@@ -167,7 +167,7 @@ namespace Stowage.SelfTest
          if(_pathPrefix != null)
             id = IOPath.Combine(_pathPrefix, id);
 
-         using Stream ws = await _storage.OpenWrite(id, WriteMode.Create);
+         using Stream ws = await _storage.OpenWrite(id);
          using Stream s = "kjhlkhlkhlkhlkh".ToMemoryStream();
 
          s.CopyTo(ws);
@@ -322,7 +322,7 @@ namespace Stowage.SelfTest
       {
          try
          {
-            await _storage.OpenWrite(null, WriteMode.Create);
+            await _storage.OpenWrite(null);
 
             AssertFail("exception", "nothing happened");
          }
@@ -337,7 +337,7 @@ namespace Stowage.SelfTest
       {
          string text = "write me here on " + DateTime.UtcNow;
 
-         using(Stream s = await _storage.OpenWrite("writeme.txt", WriteMode.Create))
+         using(Stream s = await _storage.OpenWrite("writeme.txt"))
          {
             byte[] data = Encoding.UTF8.GetBytes(text);
             s.Write(data, 0, data.Length);
@@ -353,7 +353,7 @@ namespace Stowage.SelfTest
       {
          string text = "write me here on " + DateTime.UtcNow;
 
-         using(Stream s = await _storage.OpenWrite("writeme.txt", WriteMode.Create))
+         using(Stream s = await _storage.OpenWrite("writeme.txt"))
          {
             byte[] data = Encoding.UTF8.GetBytes(text);
             await s.WriteAsync(data, 0, data.Length);
@@ -364,45 +364,13 @@ namespace Stowage.SelfTest
             AssertFail(text, actual);
       }
 
-      [Test]
-      public async Task OpenWrite_Append_LargerAndLarger()
-      {
-         string path = $"/{nameof(OpenWrite_Append_LargerAndLarger)}.txt";
-
-         await _storage.Rm(path);
-
-         // write first chunk
-         using(Stream s = await _storage.OpenWrite(path, WriteMode.Append))
-         {
-            byte[] line1 = Encoding.UTF8.GetBytes("one");
-            await s.WriteAsync(line1, 0, line1.Length);
-         }
-
-         // validate
-         string content = await _storage.ReadText(path);
-         if(content != "one")
-            AssertFail("one", content);
-
-         // write second chunk
-         using(Stream s = await _storage.OpenWrite(path, WriteMode.Append))
-         {
-            byte[] line1 = Encoding.UTF8.GetBytes("two");
-            await s.WriteAsync(line1, 0, line1.Length);
-         }
-
-         // validate
-         content = await _storage.ReadText(path);
-         if(content != "onetwo")
-            AssertFail("onetwo", content);
-      }
-
 #if(NETSTANDARD2_1 || NETCOREAPP3_1_OR_GREATER)
       [Test]
       public async Task OpenWrite_WriteAsync_DisposeAsync_ReadsSameText()
       {
          string text = "write me here on " + DateTime.UtcNow;
 
-         await using(Stream s = await _storage.OpenWrite("writeme.txt", WriteMode.Create))
+         await using(Stream s = await _storage.OpenWrite("writeme.txt"))
          {
             byte[] data = Encoding.UTF8.GetBytes(text);
             await s.WriteAsync(data, 0, data.Length);

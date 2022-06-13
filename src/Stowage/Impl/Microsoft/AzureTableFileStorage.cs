@@ -71,7 +71,7 @@ namespace Stowage.Impl.Microsoft
       /// <param name="mode"></param>
       /// <param name="cancellationToken"></param>
       /// <returns></returns>
-      public override async Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default)
+      public override async Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default)
       {
          string[] parts = IOPath.Split(path);
 

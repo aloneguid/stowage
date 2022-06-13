@@ -80,13 +80,10 @@ namespace Stowage.Impl.Amazon
          return await response.Content.ReadAsStreamAsync();
       }
 
-      public override async Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default)
+      public override async Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default)
       {
          if(path is null)
             throw new ArgumentNullException(nameof(path));
-
-         if(mode == WriteMode.Append)
-            throw new NotSupportedException("S3 does NOT support native append mode (but azure blob storage does).");
 
          string npath = IOPath.Normalize(path, true);
 

@@ -82,7 +82,7 @@ namespace Stowage.Impl
          return Task.FromResult(matches);
       }
 
-      public override Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default)
+      public override Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default)
       {
          if(path is null)
             throw new ArgumentNullException(nameof(path));
@@ -133,30 +133,23 @@ namespace Stowage.Impl
 
       public override void Dispose() {}
 
-      void Add(string path, DataStream sourceStream)
+      private void Add(string path, DataStream sourceStream)
       {
          if(path is null)
             throw new ArgumentNullException(nameof(path));
 
          path = IOPath.Normalize(path);
 
-         if(sourceStream is MemoryStream ms)
-            ms.Position = 0;
-         byte[] data = sourceStream.ToByteArray();
+         sourceStream.Position = 0;
 
          if(!_pathToTag.TryGetValue(path, out Tag tag))
          {
-            tag = new Tag
-            {
-               entry = path,
-               data = sourceStream,
-            };
+            tag = new Tag();
          }
-         else
-         {
-            tag.entry = path;
-            tag.data = sourceStream;
-         }
+
+         tag.entry = path;
+         tag.data = sourceStream;
+
          _pathToTag[path] = tag;
 
          AddVirtualFolderHierarchy(path);

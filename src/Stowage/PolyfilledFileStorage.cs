@@ -12,7 +12,7 @@ namespace Stowage
    {
       public abstract Task<IReadOnlyCollection<IOEntry>> Ls(IOPath path = null, bool recurse = false, CancellationToken cancellationToken = default);
 
-      public abstract Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default);
+      public abstract Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default);
 
       public virtual async Task WriteText(IOPath path, string contents, Encoding encoding = null, CancellationToken cancellationToken = default)
       {
@@ -25,7 +25,7 @@ namespace Stowage
          if(!path.IsFile)
             throw new ArgumentException($"{nameof(path)} needs to be a file", nameof(path));
 
-         using Stream ws = await OpenWrite(path, WriteMode.Create, cancellationToken);
+         using Stream ws = await OpenWrite(path, cancellationToken);
          Stream rs = contents.ToMemoryStream(encoding ?? Encoding.UTF8);
          await rs.CopyToAsync(ws);
       }
@@ -140,7 +140,7 @@ namespace Stowage
          {
             if(src != null)
             {
-               using(Stream dest = await OpenWrite(newPath, WriteMode.Create, cancellationToken))
+               using(Stream dest = await OpenWrite(newPath, cancellationToken))
                {
                   await src.CopyToAsync(dest);
                }

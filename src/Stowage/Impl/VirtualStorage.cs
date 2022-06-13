@@ -68,7 +68,7 @@ namespace Stowage.Impl
 
       public Task<bool> Exists(IOPath path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
       public Task<Stream> OpenRead(IOPath path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-      public Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
       public Task<string> ReadText(IOPath path, Encoding encoding = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
       public Task Rm(IOPath path, bool recurse = false, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 

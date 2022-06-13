@@ -50,15 +50,16 @@ namespace Stowage
 
 
       /// <summary>
-      /// Open blob for writing as a stream. You can keep writing to the stream for as long as you want - the data will be dumpted periodically to online storage.
+      /// Open blob for writing as a stream. If the blob already exists it will be quietly overwritten.
+      /// Unfortunately there is no cross-cloud way to append to blobs as most providers do not support them (the only reliable one is Azure Blob Storage).
+      /// You can keep writing to the stream for as long as you want - the data will be dumpted periodically to online storage.
       /// The blob is considered finished when you dispose the stream.
       /// Although the returned stream is fully compatible with synchronous API, please prefer async write and async dispose when possible.
       /// </summary>
       /// <param name="path"></param>
-      /// <param name="mode"></param>
       /// <param name="cancellationToken"></param>
       /// <returns></returns>
-      Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default);
+      Task<Stream> OpenWrite(IOPath path,CancellationToken cancellationToken = default);
 
       Task WriteText(IOPath path, string contents, Encoding encoding = null, CancellationToken cancellationToken = default);
 

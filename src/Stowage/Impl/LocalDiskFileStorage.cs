@@ -84,14 +84,14 @@ namespace Stowage.Impl
       }
 
 
-      public override Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default)
+      public override Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default)
       {
          if(path is null)
             throw new ArgumentNullException(nameof(path));
 
          string npath = IOPath.Normalize(path);
 
-         return Task.FromResult(CreateStream(npath, mode != WriteMode.Append));
+         return Task.FromResult(CreateStream(npath));
       }
 
       public override Task<Stream> OpenRead(IOPath path, CancellationToken cancellationToken)

@@ -100,6 +100,8 @@ namespace Stowage.Impl.Databricks
          HttpResponseMessage response = await SendAsync(request);
          if(response.StatusCode == HttpStatusCode.NotFound)
             return;
+         if(response.StatusCode == HttpStatusCode.Forbidden)
+            return;
          if(!response.IsSuccessStatusCode)
          {
             throw new IOException($"failed to list path {path}, response code: {response.StatusCode} ({response.ReasonPhrase})");
@@ -164,7 +166,7 @@ namespace Stowage.Impl.Databricks
          return rr == null ? null : Convert.FromBase64String(rr.Base64EncodedData);
       }
 
-      public override async Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default)
+      public override async Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default)
       {
          if(path is null)
             throw new ArgumentNullException(nameof(path));

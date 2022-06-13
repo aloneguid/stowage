@@ -10,7 +10,7 @@ using System.Xml.Linq;
 
 namespace Stowage.Impl.Microsoft
 {
-   sealed class AzureBlobFileStorage : PolyfilledHttpFileStorage
+   sealed class AzureBlobFileStorage : PolyfilledHttpFileStorage, IAzureBlobFileStorage
    {
       // https://docs.microsoft.com/en-us/rest/api/storageservices/blob-service-rest-api
 
@@ -134,12 +134,23 @@ namespace Stowage.Impl.Microsoft
          return result;
       }
 
-      public override Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default)
+      public override Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default)
+      {
+         return OpenWrite(path, false, cancellationToken);
+      }
+
+      public Task<Stream> OpenAppend(IOPath path, CancellationToken cancellationToken = default)
+      {
+         return OpenWrite(path, true, cancellationToken);
+      }
+
+
+      private Task<Stream> OpenWrite(IOPath path, bool append, CancellationToken cancellationToken = default)
       {
          if(path is null)
             throw new ArgumentNullException(nameof(path));
 
-         return Task.FromResult<Stream>(new AzureWriteStream(this, GetContainerName(path), GetPathInContainer(path), mode));
+         return Task.FromResult<Stream>(new AzureWriteStream(this, GetContainerName(path), GetPathInContainer(path), append));
       }
 
       private HttpRequestMessage CreatePutBlockRequest(int blockId, string containerName, string blobName, byte[] buffer, int count, out string blockIdStr)
@@ -175,6 +186,12 @@ namespace Stowage.Impl.Microsoft
          HttpResponseMessage response = Send(request);
          if(response.StatusCode == HttpStatusCode.NotFound)
             throw new FileNotFoundException();
+
+         // trying to append to block blob results in 409 Conflict error. What you can do is re-make the blob as "append".
+         if(response.StatusCode == HttpStatusCode.Conflict)
+         {
+         }
+         
          response.EnsureSuccessStatusCode();
       }
 

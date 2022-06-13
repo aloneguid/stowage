@@ -86,9 +86,12 @@ namespace Stowage.Impl.Google
       {
          HttpResponseMessage response = await SendAsync(CreateInitiateResumableUploadRequest(objectName));
          response.EnsureSuccessStatusCode();
-         return response.Headers.Location.ToString();
+         return response?.Headers?.Location?.ToString();
       }
 
+      /// <summary>
+      /// Interesting: A resumable upload must be completed within a week of being initiated.
+      /// </summary>
       private HttpRequestMessage CreateResumeUploadRequest(string sessionUri, byte[] buffer, int count)
       {
          //probably need content-range: https://cloud.google.com/storage/docs/performing-resumable-uploads#initiate-session
@@ -109,7 +112,7 @@ namespace Stowage.Impl.Google
          response.EnsureSuccessStatusCode();
       }
 
-      public override Task<Stream> OpenWrite(IOPath path, WriteMode mode, CancellationToken cancellationToken = default)
+      public override Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default)
       {
          if(path is null)
             throw new ArgumentNullException(nameof(path));
