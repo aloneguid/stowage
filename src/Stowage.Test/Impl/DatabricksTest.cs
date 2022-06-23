@@ -45,6 +45,8 @@ namespace Stowage.Test.Impl
       [Fact]
       public async Task SqlLs()
       {
+         IReadOnlyCollection<DataSource> dss = await dbc.LsDataSources();
+
          IReadOnlyCollection<SqlQuery> queries = await dbc.LsSqlQueries();
 
          Assert.NotEmpty(queries);
@@ -59,7 +61,7 @@ namespace Stowage.Test.Impl
       [Fact]
       public async Task TakeOwnership()
       {
-         IReadOnlyCollection<SqlQueryBase> queries = await dbc.LsSqlQueries();
+         IReadOnlyCollection<SqlQuery> queries = await dbc.LsSqlQueries();
 
          string qs = await dbc.GetSqlQueryRaw(queries.First().Id);
          SqlQuery q = await dbc.GetSqlQuery(queries.First().Id);

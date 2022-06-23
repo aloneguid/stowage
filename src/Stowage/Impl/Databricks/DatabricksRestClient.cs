@@ -458,6 +458,12 @@ namespace Stowage.Impl.Databricks
          return result;
       }
 
+      public async Task<IReadOnlyCollection<DataSource>> LsDataSources()
+      {
+         return await GetAsync<DataSource[]>($"{_sqlPreviewBase}/data_sources");
+      }
+
+
       public async Task<IReadOnlyCollection<SqlEndpoint>> LsSqlEndpoints()
       {
          // endpoints API: https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints
@@ -489,6 +495,8 @@ namespace Stowage.Impl.Databricks
       {
          var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlPreviewBase}/queries/{queryId}");
          HttpResponseMessage response = await SendAsync(request);
+         if(response.StatusCode == HttpStatusCode.NotFound)
+            return null;
          response.EnsureSuccessStatusCode();
          string rjson = await response.Content.ReadAsStringAsync();
          return rjson;
@@ -496,7 +504,12 @@ namespace Stowage.Impl.Databricks
 
       public async Task<SqlQuery> GetSqlQuery(string queryId)
       {
-         SqlQuery r = JsonSerializer.Deserialize<SqlQuery>(await GetSqlQueryRaw(queryId));
+         string raw = await GetSqlQueryRaw(queryId);
+
+         if(raw == null)
+            return null;
+
+         SqlQuery r = JsonSerializer.Deserialize<SqlQuery>(raw);
 
          return r;
       }
@@ -517,7 +530,7 @@ namespace Stowage.Impl.Databricks
          await EnsureSuccessOrThrow(response);
 
          string rjson = await response.Content.ReadAsStringAsync();
-         SqlQueryBase result = JsonSerializer.Deserialize<SqlQueryBase>(rjson);
+         SqlQuery result = JsonSerializer.Deserialize<SqlQuery>(rjson);
          return result.Id;
       }
 
