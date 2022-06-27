@@ -18,5 +18,10 @@ namespace Stowage.Impl.Databricks
 
       [JsonPropertyName("is_db_admin")]
       public bool IsDbAdmin { get; set; }
+
+      /// <summary>
+      /// Returns user name
+      /// </summary>
+      public override string ToString() => Name;
    }
 }

@@ -323,7 +323,7 @@ namespace Stowage.Impl.Databricks
          HttpResponseMessage response = await SendAsync(request);
          await EnsureSuccessOrThrow(response);
          string rjson = await response.Content.ReadAsStringAsync();
-         return JsonSerializer.Deserialize<CreateJobResponse>(rjson).JobId;
+         return JsonSerializer.Deserialize<CreateJobResponse>(rjson)?.JobId ?? 0;
       }
 
       public async Task ResetJob(long jobId, string jobJson, string apiVersion = "2.0")
@@ -438,11 +438,11 @@ namespace Stowage.Impl.Databricks
          return result;
       }
 
-      public async Task<IReadOnlyCollection<SqlDashboardBase>> LsSqlDashboards()
+      public async Task<IReadOnlyCollection<SqlDashboard>> LsSqlDashboards(Func<long, long, Task> progress = null)
       {
          long pageNo = 0;
          const long pageSize = 50;
-         var result = new List<SqlDashboardBase>();
+         var result = new List<SqlDashboard>();
 
          while(true)
          {
@@ -456,6 +456,17 @@ namespace Stowage.Impl.Databricks
          }
 
          return result;
+      }
+
+      public async Task<string> GetSqlDashboardRaw(string dashboardId)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Get, $"{_sqlPreviewBase}/dashboards/{dashboardId}");
+         HttpResponseMessage response = await SendAsync(request);
+         if(response.StatusCode == HttpStatusCode.NotFound)
+            return null;
+         response.EnsureSuccessStatusCode();
+         string rjson = await response.Content.ReadAsStringAsync();
+         return rjson;
       }
 
       public async Task<IReadOnlyCollection<DataSource>> LsDataSources()
@@ -708,7 +719,7 @@ namespace Stowage.Impl.Databricks
          public long Count { get; set; }
 
          [JsonPropertyName("results")]
-         public SqlDashboardBase[] Results { get; set; }
+         public SqlDashboard[] Results { get; set; }
       }
 
       public class WorkspaceLsRequest

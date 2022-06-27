@@ -49,13 +49,11 @@ namespace Stowage.Test.Impl
 
          IReadOnlyCollection<SqlQuery> queries = await dbc.LsSqlQueries();
 
-         Assert.NotEmpty(queries);
-      }
+         IReadOnlyCollection<SqlDashboard> dashboards = await dbc.LsSqlDashboards();
 
-      [Fact]
-      public async Task DashLs()
-      {
-         IReadOnlyCollection<SqlDashboardBase> dashboards = await dbc.LsSqlDashboards();
+         string dashboardRaw = await dbc.GetSqlDashboardRaw(dashboards.First().Id);
+
+         Assert.NotEmpty(queries);
       }
 
       [Fact]

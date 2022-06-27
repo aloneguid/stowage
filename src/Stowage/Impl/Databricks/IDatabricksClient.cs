@@ -74,8 +74,9 @@ namespace Stowage.Impl.Databricks
 
       #region [ Dashboards ]
 
-      Task<IReadOnlyCollection<SqlDashboardBase>> LsSqlDashboards();
+      Task<IReadOnlyCollection<SqlDashboard>> LsSqlDashboards(Func<long, long, Task> progress = null);
 
+      Task<string> GetSqlDashboardRaw(string dashboardId);
 
       #endregion
 
