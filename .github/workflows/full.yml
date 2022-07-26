@@ -1,7 +1,7 @@
 name: main
 
 env:
-  v: '1.2.2'
+  v: '1.2.3'
   av: '1.0.0'
 
 on:
@@ -51,3 +51,9 @@ jobs:
           name: packages
       - name: Push to nuget.org
         run: dotnet nuget push Stowage/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          tag_name: ${{ env.v }}
+          name: ${{ env.v }}
