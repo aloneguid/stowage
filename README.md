@@ -132,7 +132,9 @@ I'm a strong advocate of simplicity and not going to repeat the mistake of turni
 - Used by:
   - [databricks-sql-cli](https://github.com/aloneguid/databricks-sql-cli) - Unofficial Databricks SQL management console.
   - [Pocket Bricks](https://www.aloneguid.uk/projects/pocketbricks/) - Databricks client for Android.
+  - [Stowage Explorer](https://github.com/DaneVinson/StowageExplorer) - experimental explorer project?
 - Featured in [The .NET MAUI Podcast, episode 98](https://www.dotnetmauipodcast.com/98).
+- Blog post [Exploring Stowage](https://developingdane.com/exploring-stowage/).
 
 ## Related Projects
 
