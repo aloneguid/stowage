@@ -131,7 +131,7 @@ namespace Stowage.Impl
 
       private Stream OpenStream(string path)
       {
-         path = GetFilePath(path);
+         path = GetFilePath(path, false);
 
          if(!SysIO.File.Exists(path))
             return null;
@@ -161,7 +161,7 @@ namespace Stowage.Impl
             rawPath = Path.Combine(_directoryFullName, extraPath);
 
             dir = rawPath;
-            if(!Directory.Exists(dir))
+            if(createIfNotExists && !Directory.Exists(dir))
                Directory.CreateDirectory(dir);
          }
 
