@@ -72,7 +72,7 @@ namespace Stowage
          const string accountName = "devstoreaccount1";
          const string sharedKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
          var endpoint = new Uri("http://127.0.0.1:10000/devstoreaccount1");
-         return new AzureBlobFileStorage(endpoint, containerName, new SharedKeyAuthHandler(accountName, sharedKey));
+         return new AzureBlobFileStorage(endpoint, $"devstoreaccount1/{containerName}", new SharedKeyAuthHandler(accountName, sharedKey));
       }
 
       /*public static IFileStorage AzureTableStorage(
