@@ -33,6 +33,17 @@ namespace Stowage.Impl.Microsoft
          _containerName = containerName;
       }
 
+      public AzureBlobFileStorage(Uri endpoint, string containerName, DelegatingHandler authHandler)
+         : base(endpoint, authHandler)
+      {
+         if(string.IsNullOrEmpty(containerName))
+            throw new ArgumentException($"'{nameof(containerName)}' cannot be null or empty", nameof(containerName));
+         if(authHandler is null)
+            throw new ArgumentNullException(nameof(authHandler));
+
+         _containerName = containerName;
+      }
+
       public override Task<IReadOnlyCollection<IOEntry>> Ls(IOPath path, bool recurse = false, CancellationToken cancellationToken = default)
       {
          if(path != null && !path.IsFolder)
@@ -191,7 +202,7 @@ namespace Stowage.Impl.Microsoft
          if(response.StatusCode == HttpStatusCode.Conflict)
          {
          }
-         
+
          response.EnsureSuccessStatusCode();
       }
 
@@ -258,7 +269,7 @@ namespace Stowage.Impl.Microsoft
          return request;
       }
 
-      
+
       public async Task PutBlobAsync(string containerName, string blobName, string blobType = "BlockBlob")
       {
          HttpResponseMessage response = await SendAsync(CreatePutBlobRequest(containerName, blobName, blobType));

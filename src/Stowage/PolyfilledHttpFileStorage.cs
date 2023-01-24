@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -11,6 +12,9 @@ namespace Stowage
 
       protected PolyfilledHttpFileStorage(Uri baseAddress, DelegatingHandler authHandler)
       {
+         if(baseAddress is null)
+            throw new ArgumentNullException(nameof(baseAddress));
+
          _http = new HttpClient(authHandler)
          {
             BaseAddress = baseAddress,

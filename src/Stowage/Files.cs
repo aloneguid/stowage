@@ -62,6 +62,19 @@ namespace Stowage
          return new AzureBlobFileStorage(accountName, containerName, new SharedKeyAuthHandler(accountName, sharedKey));
       }
 
+      public static IFileStorage AzureBlobStorage(this IFilesFactory _, Uri endpoint, string accountName, string sharedKey, string containerName = null)
+      {
+         return new AzureBlobFileStorage(endpoint, containerName, new SharedKeyAuthHandler(accountName, sharedKey));
+      }
+
+      public static IFileStorage AzureBlobStorageWithLocalEmulator(this IFilesFactory _, string containerName = null)
+      {
+         const string accountName = "devstoreaccount1";
+         const string sharedKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
+         var endpoint = new Uri("http://127.0.0.1:10000/devstoreaccount1");
+         return new AzureBlobFileStorage(endpoint, containerName, new SharedKeyAuthHandler(accountName, sharedKey));
+      }
+
       /*public static IFileStorage AzureTableStorage(
          this IFilesFactory _, string accountName, string sharedKey)
       {
