@@ -21,6 +21,8 @@ namespace Stowage.Test.Impl
          _storage = (IAzureBlobFileStorage)Files.Of.AzureBlobStorage(
             settings.AzureStorageAccount, settings.AzureStorageKey, settings.AzureContainerName);
 
+         //_storage = (IAzureBlobFileStorage)Files.Of.AzureBlobStorageWithLocalEmulator(settings.AzureContainerName);
+
       }
 
       [Fact]
