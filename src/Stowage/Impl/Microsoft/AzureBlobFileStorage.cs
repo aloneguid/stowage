@@ -171,7 +171,7 @@ namespace Stowage.Impl.Microsoft
 
       private HttpRequestMessage CreatePutBlockRequest(int blockId, string containerName, string blobName, byte[] buffer, int count, out string blockIdStr)
       {
-         blockIdStr = Convert.ToBase64String(Encoding.ASCII.GetBytes(blockId.ToString()));
+         blockIdStr = Convert.ToBase64String(Encoding.ASCII.GetBytes(blockId.ToString("d6")));
 
          // call https://docs.microsoft.com/en-us/rest/api/storageservices/put-block
          var request = new HttpRequestMessage(HttpMethod.Put, $"{containerName}/{blobName}?comp=block&blockid={blockIdStr}");
