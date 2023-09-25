@@ -18,10 +18,8 @@ namespace Stowage
 
       protected PolyfilledWriteStream(int bufferSize)
       {
-         _buffer = _pool.Rent(bufferSize);
-
          _bufferSize = _envSize != 0 ? _envSize : bufferSize;
-         //_bufferSize = 5;
+         _buffer = _pool.Rent(_bufferSize);
          Debug.WriteLine("buffer size: {0}", _bufferSize);
       }
 

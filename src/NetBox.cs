@@ -291,7 +291,7 @@ namespace NetBox
             return null;
 
          byte[] bytes = Encoding.UTF8.GetBytes(value);
-         return Encoding.UTF8.GetString(UrlEncode(bytes, 0, bytes.Length, false /* alwaysCreateNewReturnValue */));
+         return Encoding.UTF8.GetString(bytes);
       }
 
       public static string UrlDecode(string encodedValue)
