@@ -84,10 +84,10 @@ namespace Stowage
 
       public static IFileStorage AmazonS3(this IFilesFactory _, string bucketName, string accessKeyId, string secretAccessKey, string region)
       {
-         return AmazonS3(_, bucketName, accessKeyId, secretAccessKey, region, new Uri($"https://{bucketName}.s3.amazonaws.com"));
+         return AmazonS3(_, accessKeyId, secretAccessKey, region, new Uri($"https://{bucketName}.s3.amazonaws.com"));
       }
 
-      public static IFileStorage AmazonS3(this IFilesFactory _, string bucketName, string accessKeyId, string secretAccessKey, string region, Uri endpoint)
+      public static IFileStorage AmazonS3(this IFilesFactory _, string accessKeyId, string secretAccessKey, string region, Uri endpoint)
       {
          return new AwsS3FileStorage(
             endpoint,

@@ -21,7 +21,7 @@ namespace Stowage.Impl.Amazon
 
       public override async Task<IReadOnlyCollection<IOEntry>> Ls(IOPath path, bool recurse = false, CancellationToken cancellationToken = default)
       {
-         if(path != null && !path.IsFolder)
+         if(path != null && !path.IsFolderPath)
             throw new ArgumentException("path needs to be a folder", nameof(path));
 
          string delimiter = recurse ? null : "/";

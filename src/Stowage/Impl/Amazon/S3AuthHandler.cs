@@ -52,7 +52,6 @@ namespace Stowage.Impl.Amazon
       protected async Task<string> SignAsync(HttpRequestMessage request, DateTimeOffset? signDate = null)
       {
          // a very helpful article on S3 auth: https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
-
          DateTimeOffset dateToUse = signDate ?? DateTimeOffset.UtcNow;
          string nowDate = dateToUse.ToString("yyyyMMdd");
          string amzNowDate = GetAmzDate(dateToUse);
@@ -69,7 +68,7 @@ namespace Stowage.Impl.Amazon
           * <SignedHeaders>\n
           * <HashedPayload>
           */
-
+         
          string payloadHash = await AddPayloadHashHeader(request);
 
          string canonicalRequest = request.Method + "\n" +
@@ -135,9 +134,10 @@ namespace Stowage.Impl.Amazon
       private string GetCanonicalUri(HttpRequestMessage request)
       {
          string path = request.RequestUri.AbsolutePath;
-         string[] ppts = IOPath.Split(path);
+         string[] ppts = IOPath.Split(path, appendPathSeparatorIfFolder: false);
 
-         return IOPath.Combine(ppts.Select(p => p.UrlEncode()));
+         string canonicalUri = IOPath.Combine(ppts.Select(p => p.UrlEncode()));
+         return IOPath.IsFolder(canonicalUri) ? canonicalUri + IOPath.PathSeparatorString : canonicalUri;
       }
 
       private string GetCanonicalQueryString(HttpRequestMessage request)
@@ -216,7 +216,7 @@ namespace Stowage.Impl.Amazon
             signedHeadersList.Add("date");
          }
 
-         sb.Append("host:").Append(request.RequestUri.Host).Append("\n");
+         sb.Append("host:").Append(request.RequestUri.Authority).Append("\n");
          signedHeadersList.Add("host");
 
          if(request.Headers.Contains("range"))

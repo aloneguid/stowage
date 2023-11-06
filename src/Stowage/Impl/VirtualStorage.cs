@@ -30,7 +30,7 @@ namespace Stowage.Impl
             throw new ArgumentNullException(nameof(path));
          if(storage is null)
             throw new ArgumentNullException(nameof(storage));
-         if(!path.IsFolder)
+         if(!path.IsFolderPath)
             throw new ArgumentException($"only folders can be mounted", nameof(path));
 
          _mps.Add(new MountPoint { Path = path, Storage = storage });

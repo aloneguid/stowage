@@ -53,7 +53,7 @@ namespace Stowage.Impl.Microsoft
       public override async Task<IReadOnlyCollection<IOEntry>> Ls(
          IOPath path = null, bool recurse = false, CancellationToken cancellationToken = default)
       {
-         if(path != null && !path.IsFolder)
+         if(path != null && !path.IsFolderPath)
             throw new ArgumentException($"{nameof(path)} needs to be a folder", nameof(path));
 
          if(IOPath.IsRoot(path))

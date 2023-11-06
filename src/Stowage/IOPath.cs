@@ -254,21 +254,27 @@ namespace Stowage
       /// null if input path is null. Parent folder signatures are returned as a part of split, they are not removed.
       /// If you want to get an absolute normalized path use <see cref="Normalize(string, bool)"/>
       /// </summary>
-      public static string[] Split(string path)
+      public static string[] Split(string path, bool appendPathSeparatorIfFolder = true)
       {
          if(path == null)
             return null;
 
-         bool isFolder = path.EndsWith(PathSeparatorString);
-
          string[] parts = path.Split(new[] { PathSeparator }, StringSplitOptions.RemoveEmptyEntries).Select(NormalizePart).ToArray();
 
-         if(isFolder && parts.Length > 0)
+         if(appendPathSeparatorIfFolder && parts.Length > 0 && IsFolder(path))
          {
             parts[parts.Length - 1] = parts[parts.Length - 1] + PathSeparatorString;
          }
 
          return parts;
+      }
+
+      /// <summary>
+      /// Checks if path is folder path.
+      /// </summary>
+      public static bool IsFolder(string path)
+      {
+         return path.EndsWith(PathSeparatorString);
       }
 
       /// <summary>
@@ -338,12 +344,12 @@ namespace Stowage
       /// </summary>
       /// <param name="path"></param>
       /// <returns></returns>
-      public bool IsFolder => _name.EndsWith(PathSeparatorString);
+      public bool IsFolderPath => _name.EndsWith(PathSeparatorString);
 
       /// <summary>
       /// Simply checks if kind of this item is not a folder.
       /// </summary>
-      public bool IsFile => !IsFolder;
+      public bool IsFile => !IsFolderPath;
 
       /// <summary>
       /// Equality check

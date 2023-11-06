@@ -26,7 +26,7 @@ namespace Stowage.Impl.Google
 
       public override async Task<IReadOnlyCollection<IOEntry>> Ls(IOPath path, bool recurse = false, CancellationToken cancellationToken = default)
       {
-         if(path != null && !path.IsFolder)
+         if(path != null && !path.IsFolderPath)
             throw new ArgumentException("path needs to be a folder", nameof(path));
 
          // https://cloud.google.com/storage/docs/json_api/v1/objects/list

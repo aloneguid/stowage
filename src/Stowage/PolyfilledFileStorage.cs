@@ -108,7 +108,7 @@ namespace Stowage
             throw new ArgumentNullException(nameof(newPath));
 
          // when file moves to a folder
-         if(oldPath.IsFile && newPath.IsFolder)
+         if(oldPath.IsFile && newPath.IsFolderPath)
          {
             newPath = newPath.Combine(oldPath.Name);
 
@@ -116,11 +116,11 @@ namespace Stowage
 
             throw new NotImplementedException();
          }
-         else if(oldPath.IsFolder && newPath.IsFile)
+         else if(oldPath.IsFolderPath && newPath.IsFile)
          {
             throw new ArgumentException($"attempted to rename folder to file", nameof(newPath));
          }
-         else if(oldPath.IsFolder)
+         else if(oldPath.IsFolderPath)
          {
             // folder-to-folder ren
             throw new NotImplementedException();

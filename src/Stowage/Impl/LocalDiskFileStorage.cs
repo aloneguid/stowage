@@ -43,7 +43,7 @@ namespace Stowage.Impl
 
       public override Task<IReadOnlyCollection<IOEntry>> Ls(IOPath path = null, bool recurse = false, CancellationToken cancellationToken = default)
       {
-         if(path != null && !path.IsFolder)
+         if(path != null && !path.IsFolderPath)
             throw new ArgumentException("path needs to be a folder", nameof(path));
 
          return Task.FromResult(List(path, recurse, true));

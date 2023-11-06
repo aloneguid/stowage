@@ -59,7 +59,7 @@ namespace Stowage.Impl
          if(path == null)
             path = IOPath.Root;
 
-         if(!path.IsFolder)
+         if(!path.IsFolderPath)
             throw new ArgumentException("path needs to be a folder", nameof(path));
 
          IEnumerable<KeyValuePair<IOPath, Tag>> query = _pathToTag;
@@ -118,7 +118,7 @@ namespace Stowage.Impl
             _pathToTag.Remove(path);
          }
 
-         if(path.IsFolder && recurse)
+         if(path.IsFolderPath && recurse)
          {
             List<IOPath> candidates = _pathToTag.Where(p => p.Key.Full.StartsWith(path.Full)).Select(p => p.Key).ToList();
 

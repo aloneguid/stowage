@@ -85,7 +85,7 @@ namespace Stowage.Impl.Databricks
       /// <returns></returns>
       public override async Task<IReadOnlyCollection<IOEntry>> Ls(IOPath path = null, bool recurse = false, CancellationToken cancellationToken = default)
       {
-         if(path != null && !path.IsFolder)
+         if(path != null && !path.IsFolderPath)
             throw new ArgumentException("path needs to be a folder", nameof(path));
 
          var result = new List<IOEntry>();
@@ -120,7 +120,7 @@ namespace Stowage.Impl.Databricks
 
             if(recurse)
             {
-               foreach(IOEntry folder in batch.Where(e => e.Path.IsFolder))
+               foreach(IOEntry folder in batch.Where(e => e.Path.IsFolderPath))
                {
                   await Ls(folder.Path, container, recurse);
                }
