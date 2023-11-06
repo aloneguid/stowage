@@ -73,6 +73,36 @@ namespace Stowage.Test.Auth
       }
 
       [Fact]
+      public async Task Get_object_from_custom_endpoint()
+      {
+         string keyId = "AKIAIOSFODNN7EXAMPLE";
+         string secret = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+
+         var handler = new AuthHandlerWrapper(keyId, secret, "us-east-1");
+         HttpRequestMessage message = await handler.Exec(HttpMethod.Get, $"https://examplebucket.myprovider.com:9000/test.txt",
+            new DateTime(2013, 5, 24));
+
+         CheckHeader(message, "x-amz-date", "20130524T000000Z");
+         CheckHeader(message, "x-amz-content-sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+         CheckHeader(message, "Authorization", "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=2244d60dfc04dde1f44b8b159357b6972dbe29b93d56b99ebbb89cc2e6c37380");
+      }
+
+      [Fact]
+      public async Task Delete_folder()
+      {
+         string keyId = "AKIAIOSFODNN7EXAMPLE";
+         string secret = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+
+         var handler = new AuthHandlerWrapper(keyId, secret, "us-east-1");
+         HttpRequestMessage message = await handler.Exec(HttpMethod.Delete, $"https://examplebucket.s3.amazonaws.com/test/",
+            new DateTime(2013, 5, 24));
+
+         CheckHeader(message, "x-amz-date", "20130524T000000Z");
+         CheckHeader(message, "x-amz-content-sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+         CheckHeader(message, "Authorization", "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=3d74a056d3421e65f7357031be0efc8255ac2bd79bcfced92f7414bcd9ffec4a");
+      }
+
+      [Fact]
       public async Task Put_object()
       {
          string keyId = "AKIAIOSFODNN7EXAMPLE";
@@ -110,15 +140,18 @@ namespace Stowage.Test.Auth
          CheckHeader(message, "Authorization", "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=fea454ca298b7da1c68078a5d1bdbfbbe0d65c699e0f91ac7a200a0136783543");
       }
 
-      [Fact]
-      public async Task List_objects()
+      [Theory]
+      [InlineData(true)]
+      [InlineData(false)]
+      public async Task List_objects(bool explicitPort)
       {
          string keyId = "AKIAIOSFODNN7EXAMPLE";
          string secret = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
 
          var handler = new AuthHandlerWrapper(keyId, secret, "us-east-1");
 
-         HttpRequestMessage message = await handler.Exec(HttpMethod.Get, $"https://examplebucket.s3.amazonaws.com/?max-keys=2&prefix=J",
+         string port = explicitPort ? ":443" : string.Empty;
+         HttpRequestMessage message = await handler.Exec(HttpMethod.Get, $"https://examplebucket.s3.amazonaws.com{port}/?max-keys=2&prefix=J",
             new DateTime(2013, 5, 24));
 
          CheckHeader(message, "x-amz-date", "20130524T000000Z");

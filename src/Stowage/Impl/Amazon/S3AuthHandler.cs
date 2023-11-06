@@ -137,7 +137,9 @@ namespace Stowage.Impl.Amazon
          string[] ppts = IOPath.Split(path, appendPathSeparatorIfFolder: false);
 
          string canonicalUri = IOPath.Combine(ppts.Select(p => p.UrlEncode()));
-         return IOPath.IsFolder(canonicalUri) ? canonicalUri + IOPath.PathSeparatorString : canonicalUri;
+         return IOPath.IsFolder(path) && !IOPath.IsRoot(canonicalUri)
+            ? canonicalUri + IOPath.PathSeparatorString
+            : canonicalUri;
       }
 
       private string GetCanonicalQueryString(HttpRequestMessage request)
