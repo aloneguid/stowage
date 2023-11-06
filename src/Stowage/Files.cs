@@ -89,16 +89,23 @@ namespace Stowage
 
       public static IFileStorage AmazonS3(this IFilesFactory _, string bucketName, string accessKeyId, string secretAccessKey, string region, Uri endpoint)
       {
+         return AmazonS3(_, bucketName, accessKeyId, secretAccessKey, region, endpoint, supportsMultiPartUpload: true);
+      }
+
+      public static IFileStorage AmazonS3(this IFilesFactory _, string bucketName, string accessKeyId, string secretAccessKey, string region, Uri endpoint, bool supportsMultiPartUpload)
+      {
          return new AwsS3FileStorage(
             endpoint,
-            new S3AuthHandler(accessKeyId, secretAccessKey, region));
+            new S3AuthHandler(accessKeyId, secretAccessKey, region),
+            supportsMultiPartUpload);
       }
 
       public static IFileStorage DigitalOceanSpaces(this IFilesFactory _, string region, string accessKeyId, string secretAccessKey)
       {
          return new AwsS3FileStorage(
             new Uri($"https://{region}.digitaloceanspaces.com"),
-            new S3AuthHandler(accessKeyId, secretAccessKey, region));
+            new S3AuthHandler(accessKeyId, secretAccessKey, region),
+            supportsMultiPartUpload: true);
       }
 
 
