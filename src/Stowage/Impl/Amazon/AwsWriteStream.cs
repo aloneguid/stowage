@@ -10,7 +10,7 @@ namespace Stowage.Impl.Amazon
       private readonly string _uploadId;
       private readonly List<string> _partTags = new List<string>();
 
-      public AwsWriteStream(AwsS3FileStorage parent, string key, string uploadId) : base(1024 * 1024)
+      public AwsWriteStream(AwsS3FileStorage parent, string key, string uploadId) : base(1024 * 1024 * 5)
       {
          _parent = parent;
          _key = key;

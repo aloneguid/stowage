@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using NetBox.Generator;
 
 namespace Stowage.SelfTest
 {
@@ -349,6 +350,19 @@ namespace Stowage.SelfTest
       }
 
       [Test]
+      public async Task OpenWrite_Write10Mb()
+      {
+         int size = 1024 * 1024 * 10;
+         byte[] data = RandomGenerator.GetRandomBytes(size, size);
+
+         using(Stream s = await _storage.OpenWrite("10mb.bin"))
+         {
+            s.Write(data, 0, data.Length);
+         }
+      }
+
+
+      [Test]
       public async Task OpenWrite_WriteAsync_DisposeSync_ReadsSameText()
       {
          string text = "write me here on " + DateTime.UtcNow;
@@ -410,6 +424,19 @@ namespace Stowage.SelfTest
          if(content != generatedContent)
             AssertFail(generatedContent, content);
       }
+
+      /*[Test]
+      private async Task WriteText_SpacesInFilename_ReadsSameText()
+      {
+         string generatedContent = Guid.NewGuid().ToString();
+
+         await _storage.WriteText("me space.txt", generatedContent);
+
+         string content = await _storage.ReadText("me space.txt");
+
+         if(content != generatedContent)
+            AssertFail(generatedContent, content);
+      }*/
 
       [Test]
       private async Task WriteTextInSubfolder_ReadsSameText()
