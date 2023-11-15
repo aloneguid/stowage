@@ -22,10 +22,10 @@ jobs:
           grep -m 2 -B 1000 '^## ' bin/release-history.md | tail -n +3 | head -n -2 > release-notes.md
           cat release-notes.md
 
-      - name: Push to nuget.org
+      - name: 📢 Push to nuget.org
         run: dotnet nuget push bin/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
-      - name: Create a release
+      - name: 🥰 Create a release
         uses: softprops/action-gh-release@v1
         if: github.ref == 'refs/heads/master'
         with:
@@ -34,4 +34,4 @@ jobs:
           files: |
             bin/*.nupkg
           body_path: release-notes.md
-          discussion_category_name: announcements
+          # discussion_category_name: announcements

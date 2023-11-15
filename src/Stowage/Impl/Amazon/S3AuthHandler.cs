@@ -125,15 +125,14 @@ namespace Stowage.Impl.Amazon {
             return date.ToString("yyyyMMddTHHmmssZ");
         }
 
-        private static string GetCanonicalUri(HttpRequestMessage request) =>
-            // AbsolutePath is already URL-encoded by the URL class itself, so we can just return it.
-            request.RequestUri?.AbsolutePath;
+        private static string GetCanonicalUri(HttpRequestMessage request) {
+            string path = request.RequestUri!.GetAbsolutePathUnencoded();
+            return AWSSDKUtils.UrlEncode(path, true);
+        }
 
+        ///
         private string GetCanonicalQueryString(HttpRequestMessage request) {
-            /**
-             * CanonicalQueryString specifies the URI-encoded query string parameters. You URI-encode name and values individually. You must also sort the parameters in the canonical query string alphabetically by key name. The sorting occurs after encoding.
-             */
-
+            // CanonicalQueryString specifies the URI-encoded query string parameters. You URI-encode name and values individually. You must also sort the parameters in the canonical query string alphabetically by key name. The sorting occurs after encoding.
 
             NameValueCollection values = HttpUtility.ParseQueryString(request.RequestUri.Query);
             var sb = new StringBuilder();
@@ -146,8 +145,8 @@ namespace Stowage.Impl.Amazon {
                 }
 
                 // URI-encode each parameter name and value.
-                // Do not URI-encode any of the unreserved characters that RFC 3986 defines: A-Z, a-z, 0-9, hyphen ( - ), underscore ( _ ), period ( . ), and tilde ( ~ ).
-                string value = values[key].UrlEncode();
+                // This is a special encoding specific to AWS, not the standard URI encoding.
+                string value = AWSSDKUtils.UrlEncode(values[key], false);
 
                 if(key == null) {
                     sb
@@ -155,7 +154,7 @@ namespace Stowage.Impl.Amazon {
                        .Append("=");
                 } else {
                     sb
-                       .Append(key.UrlEncode())
+                       .Append(AWSSDKUtils.UrlEncode(key, false))
                        .Append("=")
                        .Append(value);
 

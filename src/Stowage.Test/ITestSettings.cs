@@ -1,29 +1,33 @@
 ﻿using System;
 
-namespace Stowage.Test
-{
-   public interface ITestSettings
-   {
-      string AzureStorageAccount { get; }
+namespace Stowage.Test {
+    public interface ITestSettings {
+        string AzureStorageAccount { get; }
 
-      string AzureStorageKey { get; }
+        string AzureStorageKey { get; }
 
-      string AzureContainerName { get; }
+        string AzureContainerName { get; }
 
-      string AwsBucket { get; }
+        string AwsBucket { get; }
 
-      string AwsKey { get; }
+        string AwsKey { get; }
 
-      string AwsSecret { get; }
+        string AwsSecret { get; }
 
-      string AwsRegion { get; }
+        string AwsRegion { get; }
 
-      string GcpBucket { get; }
+        Uri MinioEndpoint { get; }
 
-      string GcpCred { get; }
+        string MinioKey { get; }
 
-      Uri DatabricksBaseUri { get; }
+        string MinioSecret { get; }
 
-      string DatabricksToken { get; }
-   }
+        string GcpBucket { get; }
+
+        string GcpCred { get; }
+
+        Uri DatabricksBaseUri { get; }
+
+        string DatabricksToken { get; }
+    }
 }

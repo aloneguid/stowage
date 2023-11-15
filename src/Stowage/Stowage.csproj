@@ -15,7 +15,7 @@
         <LangVersion>latest</LangVersion>
         <PackageTags>storage aws s3 azure blob gcp google</PackageTags>
         <AssemblyOriginatorKeyFile>../fake.snk</AssemblyOriginatorKeyFile>
-        <Nullable>warnings</Nullable>
+        <Nullable>enable</Nullable>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>

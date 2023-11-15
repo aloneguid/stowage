@@ -36,6 +36,9 @@ namespace Stowage.Test.Integration {
                 case "S3":
                     storage = Files.Of.AmazonS3(settings.AwsBucket, settings.AwsKey, settings.AwsSecret, settings.AwsRegion);
                     break;
+                case "Minio":
+                    storage = Files.Of.Minio(settings.MinioEndpoint, "stowage", settings.MinioKey, settings.MinioSecret);
+                    break;
                 case "GCP":
                     storage = Files.Of.GoogleCloudStorage(settings.GcpBucket, settings.GcpCred.Base64Decode());
                     break;
@@ -103,6 +106,15 @@ namespace Stowage.Test.Integration {
         [Theory]
         [StorageTestData]
         public Task S3(string n, Func<Task> testMethod) {
+            return testMethod();
+        }
+    }
+
+    [Trait("Category", "Integration")]
+    public class MinioIntegrationTest : BuiltInIntegrationsTest {
+        [Theory]
+        [StorageTestData]
+        public Task Minio(string n, Func<Task> testMethod) {
             return testMethod();
         }
     }

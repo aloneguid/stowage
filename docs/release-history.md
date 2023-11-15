@@ -1,4 +1,15 @@
-﻿## 1.3.0
+﻿## 1.4.0
+
+### New features
+
+- [**Minio**](https://min.io/) is officially supported. Additional factory method added allowing to connect to Minio instances without knowing the internals.
+- `IOPath` has a new member - `Prefix()` allowing to add prefix to an existing path.
+
+### Bugs fixed
+
+- **S3** provider was ignoring `continuationToken` which resulted in returning only the first page in `Ls` operation.
+
+## 1.3.0
 
 ### Bugs fixed
 

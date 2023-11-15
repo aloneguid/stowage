@@ -80,6 +80,33 @@ namespace Stowage {
                new S3AuthHandler(accessKeyId, secretAccessKey, region));
         }
 
+        /// <summary>
+        /// Minio storage is a S3-compatible storage.
+        /// Read more at https://min.io/docs/minio/linux/index.html
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="endpoint">Minio endpoint, for example http://localhost:9000</param>
+        /// <param name="bucketName">Minio bucket name</param>
+        /// <param name="accessKeyId">Access key you can get from Minio's console "Access keys" tab.</param>
+        /// <param name="secretAccessKey">Secret key for the access key above</param>
+        /// <returns></returns>
+        public static IFileStorage Minio(this IFilesFactory _,
+            Uri endpoint,
+            string bucketName,
+            string accessKeyId,
+            string secretAccessKey) {
+
+            // create endpoint URI using bucketName as a subdomain and add to endpoint parameter
+            //var fullEndpoint = new Uri($"{endpoint.Scheme}://{bucketName}.{endpoint.Authority}");
+
+            // bucket name should be included as a part of the path in Minio
+            var bucketEndpoint = new Uri(endpoint, bucketName + "/");
+
+            return new AwsS3FileStorage(
+               bucketEndpoint,
+               new S3AuthHandler(accessKeyId, secretAccessKey, ""));
+        }
+
         public static IFileStorage DigitalOceanSpaces(this IFilesFactory _, string region, string accessKeyId, string secretAccessKey) {
             return new AwsS3FileStorage(
                new Uri($"https://{region}.digitaloceanspaces.com"),
