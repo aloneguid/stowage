@@ -196,7 +196,7 @@ namespace Stowage.Impl.Amazon {
                 signedHeadersList.Add("date");
             }
 
-            sb.Append("host:").Append(request.RequestUri.Host).Append("\n");
+            sb.Append("host:").Append(request.RequestUri?.Authority).Append("\n");
             signedHeadersList.Add("host");
 
             if(request.Headers.Contains("range")) {

@@ -78,7 +78,7 @@ namespace Stowage.Test.Auth {
 
             CheckHeader(message, "x-amz-date", "20130524T000000Z");
             CheckHeader(message, "x-amz-content-sha256", "44ce7dd67c959e0d3524ffac1771dfbba87d2b6b4b4e99e42034a8b803f8b072");
-            CheckHeader(message, "Authorization", "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=date;host;x-amz-content-sha256;x-amz-date;x-amz-storage-class,Signature=98ad721746da40c64f1a55b78f14c238d841ea1380cd77a1b5971af0ece108bd");
+            CheckHeader(message, "Authorization", "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=date;host;x-amz-content-sha256;x-amz-date;x-amz-storage-class,Signature=b34099c0e352465cff1a5957d94a2c97473337c0dc30aa3ce793435a81c6ecf4");
         }
 
         [Fact]
@@ -124,16 +124,18 @@ namespace Stowage.Test.Auth {
             CheckHeader(message, "Authorization", "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=fea454ca298b7da1c68078a5d1bdbfbbe0d65c699e0f91ac7a200a0136783543");
         }
 
-        [Fact]
-        public async Task List_objects() {
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task List_objects(bool explicitPort) {
             string keyId = "AKIAIOSFODNN7EXAMPLE";
             string secret = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
 
             var handler = new AuthHandlerWrapper(keyId, secret, "us-east-1");
 
-            HttpRequestMessage message = await handler.Exec(HttpMethod.Get, $"https://examplebucket.s3.amazonaws.com/?max-keys=2&prefix=J",
+            string port = explicitPort ? ":443" : string.Empty;
+            HttpRequestMessage message = await handler.Exec(HttpMethod.Get, $"https://examplebucket.s3.amazonaws.com{port}/?max-keys=2&prefix=J",
                new DateTime(2013, 5, 24));
-
             CheckHeader(message, "x-amz-date", "20130524T000000Z");
             CheckHeader(message, "x-amz-content-sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
             CheckHeader(message, "Authorization", "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=34b48302e7b5fa45bde8084f4b7868a86f0a534bc59db6670ed5711ef69dc6f7");
