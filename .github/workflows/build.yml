@@ -40,17 +40,11 @@ jobs:
     - name: Test
       run: dotnet test src/Stowage.sln -c release --filter Category!=Integration --no-restore --verbosity normal /p:Version=${{ env.v }} /p:FileVersion=${{ env.v }} /p:AssemblyVersion=${{ env.av }}
 
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.2.1
-      with:
-        name: packages
-        path: src/**/*.nupkg
-
     - name: collect artifacts
       run: |
         mkdir artifacts
         cp src/Stowage/bin/Release/*.nupkg artifacts/
-        echo "${{ env.VERSION }}" >> artifacts/version.txt
+        echo "${{ env.v }}" >> artifacts/version.txt
         cp docs/release-history.md artifacts/
 
     - uses: actions/upload-artifact@v3
