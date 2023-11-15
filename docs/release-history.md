@@ -8,7 +8,9 @@
 ### Improvements
 
 - Targeting `.NET 8`.
+- Removing unused parameter in S3 factory method by @zitmen in #16.
 
 ### Internal changes
 
-CI/CD pipeline split into "build" and "release".
+- CI/CD pipeline split into "build" and "release".
+- Added release notes document to be used when publishing a github release.
