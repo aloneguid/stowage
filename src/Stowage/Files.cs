@@ -12,17 +12,30 @@ namespace Stowage {
     public interface IFilesFactory {
     }
 
+    /// <summary>
+    /// Files factory
+    /// </summary>
     public static class Files {
-        private static Action<string> _logMessage;
+        private static Action<string>? _logMessage;
 
         private static readonly IFilesFactory _filesFactory = new EmptyFilesFactory();
 
+        /// <summary>
+        /// Create an instance of...
+        /// </summary>
         public static IFilesFactory Of => _filesFactory;
 
         sealed class EmptyFilesFactory : IFilesFactory {
 
         }
 
+        /// <summary>
+        /// Context switcher for the current thread
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="storage"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static IDisposable The(this IFilesFactory _, IFileStorage storage) {
             if(storage is null)
                 throw new ArgumentNullException(nameof(storage));
@@ -30,20 +43,41 @@ namespace Stowage {
             return IOContext.Push(storage);
         }
 
+        /// <summary>
+        /// Instantiate a storage from the connection string
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="connnectionString"></param>
+        /// <returns></returns>
         public static IFileStorage ConnectionString(this IFilesFactory _, string connnectionString) {
             return ConnectionStringFactory.Create(connnectionString);
-
-            //return IOContext.Push(ConnectionStringFactory.Create(connnectionString));
         }
 
+        /// <summary>
+        /// Instantiate local disk storage
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="rootDir"></param>
+        /// <returns></returns>
         public static IFileStorage LocalDisk(this IFilesFactory _, string rootDir) {
             return new LocalDiskFileStorage(rootDir);
         }
 
+        /// <summary>
+        /// Instantiate internal memory storage
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public static IFileStorage InternalMemory(this IFilesFactory _, string id = null) {
             return InMemoryFileStorage.CreateOrGet(id);
         }
 
+        /// <summary>
+        /// Instantiate virtual filesystem storage
+        /// </summary>
+        /// <param name="_"></param>
+        /// <returns></returns>
         public static IVirtualStorage VFS(this IFilesFactory _) {
             return new VirtualStorage();
         }

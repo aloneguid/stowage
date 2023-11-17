@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stowage", "Stowage\Stowage.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stowage.Test", "Stowage.Test\Stowage.Test.csproj", "{D6FBF520-3DE8-4D5D-867F-D2D3A48D316A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stowage.Terminal", "Stowage.Terminal\Stowage.Terminal.csproj", "{97ADE5EE-06FD-46FA-8D84-0630E1556B56}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{D6FBF520-3DE8-4D5D-867F-D2D3A48D316A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D6FBF520-3DE8-4D5D-867F-D2D3A48D316A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D6FBF520-3DE8-4D5D-867F-D2D3A48D316A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97ADE5EE-06FD-46FA-8D84-0630E1556B56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97ADE5EE-06FD-46FA-8D84-0630E1556B56}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97ADE5EE-06FD-46FA-8D84-0630E1556B56}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97ADE5EE-06FD-46FA-8D84-0630E1556B56}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
