@@ -25,8 +25,7 @@ Simplest case, using the local 💽 and writing text "I'm a page!!!" to a file c
 ```csharp
 using Stowage;
 
-using(IFileStorage fs = Files.Of.LocalDisk("c:\\"))
-{
+using(IFileStorage fs = Files.Of.LocalDisk("c:\\")) {
    await fs.WriteText("pagefile.sys", "I'm a page!!!!");
 }
 ```
@@ -36,8 +35,7 @@ This is local disk, yeah? But what about cloud storage, like Azure Blob Storage?
 ```csharp
 using Stowage;
 
-using(IFileStorage fs = Files.Of.AzureBlobStorage("accountName", "accountKey", "containerName"))
-{
+using(IFileStorage fs = Files.Of.AzureBlobStorage("accountName", "accountKey", "containerName")) {
    var entries = await fs.Ls();
 }
 ```

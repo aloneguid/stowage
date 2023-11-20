@@ -10,7 +10,7 @@ namespace Stowage
 {
    abstract class PolyfilledFileStorage : IFileStorage
    {
-      public abstract Task<IReadOnlyCollection<IOEntry>> Ls(IOPath path = null, bool recurse = false, CancellationToken cancellationToken = default);
+      public abstract Task<IReadOnlyCollection<IOEntry>> Ls(IOPath? path = null, bool recurse = false, CancellationToken cancellationToken = default);
 
       public abstract Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default);
 

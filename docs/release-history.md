@@ -1,4 +1,10 @@
-﻿## 1.4.0
+﻿## 1.5.0
+
+### New features
+
+- S3 provider supports authentication with local AWS CLI profiles.
+
+## 1.4.0
 
 ### New features
 
