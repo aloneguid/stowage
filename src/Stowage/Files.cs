@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Runtime.CompilerServices;
 using Stowage.Impl;
@@ -10,6 +11,9 @@ using Stowage.Impl.Microsoft;
 [assembly: InternalsVisibleTo("Stowage.Test, PublicKey=00240000048000009400000006020000002400005253413100040000010001001586d122f32211df78c3f502f97879e8ded0d3a9a2b1eb36cc9606730cf0905ab3a15b8045bd5691784302ab0c818b59b839ecb186ac92e4892469e648b43ffe45a2c68681a56bddd0002f0543713214c37451d5309930b911f1c910731da6297b7f1a607a49f43f99c790efe81308267d7c8d3cc3f10fcd3efaa64f23409cac")]
 
 namespace Stowage {
+    /// <summary>
+    /// Factory entry point
+    /// </summary>
     public interface IFilesFactory {
     }
 
@@ -55,13 +59,26 @@ namespace Stowage {
         }
 
         /// <summary>
-        /// Instantiate local disk storage
+        /// Instantiate local disk storage mapped to a directory.
         /// </summary>
         /// <param name="_"></param>
         /// <param name="rootDir"></param>
         /// <returns></returns>
         public static IFileStorage LocalDisk(this IFilesFactory _, string rootDir) {
             return new LocalDiskFileStorage(rootDir);
+        }
+
+        /// <summary>
+        /// Instantiate local disk storage mapped to entire local filesystem. On Windows, this will be mapped to
+        /// the root of the current drive. On Linux, this will be mapped to the root filesystem.
+        /// </summary>
+        /// <param name="_"></param>
+        /// <returns></returns>
+        public static IFileStorage EntireLocalDisk(this IFilesFactory _) {
+            string cp = Environment.CurrentDirectory;
+            string root = new DirectoryInfo(cp).Root.FullName;
+
+            return new LocalDiskFileStorage(root);
         }
 
         /// <summary>
@@ -98,25 +115,42 @@ namespace Stowage {
             return new AzureBlobFileStorage(endpoint, containerName, new SharedKeyAuthHandler(accountName, sharedKey));
         }
 
-        /*public static IFileStorage AzureTableStorage(
-           this IFilesFactory _, string accountName, string sharedKey)
-        {
-           return new AzureTableFileStorage(accountName,
-              new  SharedKeyAuthHandler(accountName, sharedKey, true));
-        }*/
-
-        public static IFileStorage AmazonS3(this IFilesFactory _, string bucketName, string accessKeyId, string secretAccessKey, string region) {
-            return AmazonS3(_, accessKeyId, secretAccessKey, region, new Uri($"https://{bucketName}.s3.amazonaws.com"));
-        }
-
-        public static IFileStorage AmazonS3(this IFilesFactory _, string accessKeyId, string secretAccessKey, string region, Uri endpoint) {
-            return new AwsS3FileStorage(
-               endpoint,
-               new S3AuthHandler(accessKeyId, secretAccessKey, region));
+        /// <summary>
+        /// Creates Amazon S3 provider
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="bucketName"></param>
+        /// <param name="accessKeyId"></param>
+        /// <param name="secretAccessKey"></param>
+        /// <param name="region"></param>
+        /// <param name="sessionToken">Optional session token</param>
+        /// <returns></returns>
+        public static IFileStorage AmazonS3(this IFilesFactory _,
+            string bucketName, string accessKeyId, string secretAccessKey, string region, string? sessionToken = null) {
+            return AmazonS3(_, accessKeyId, secretAccessKey, region, 
+                new Uri($"https://{bucketName}.s3.amazonaws.com"),
+                sessionToken);
         }
 
         /// <summary>
-        /// Creates Amazon S3 provider using AWS CLI profile name
+        /// Creates Amazon S3 provider
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="accessKeyId">Access key id</param>
+        /// <param name="secretAccessKey">Secret access key</param>
+        /// <param name="region"></param>
+        /// <param name="endpoint"></param>
+        /// <param name="sessionToken">Optional session token</param>
+        /// <returns></returns>
+        public static IFileStorage AmazonS3(this IFilesFactory _,
+            string accessKeyId, string secretAccessKey, string region, Uri endpoint, string? sessionToken = null) {
+            return new AwsS3FileStorage(
+               endpoint,
+               new S3AuthHandler(accessKeyId, secretAccessKey, sessionToken, region));
+        }
+
+        /// <summary>
+        /// Creates Amazon S3 provider using AWS CLI profile name. This also supports session tokens if they are present in the profile definition.
         /// </summary>
         /// <param name="_"></param>
         /// <param name="bucketName"></param>
@@ -126,7 +160,7 @@ namespace Stowage {
         public static IFileStorage AmazonS3(this IFilesFactory _, string bucketName, string region, string profileName = "default") {
             var parser = new CredentialFileParser();
             parser.FillCredentials(profileName, out string? accessKeyId, out string? secretAccessKey, out string? sessionToken);
-            return AmazonS3(_, accessKeyId, secretAccessKey, region, new Uri($"https://{bucketName}.s3.amazonaws.com"));
+            return AmazonS3(_, accessKeyId, secretAccessKey, region, new Uri($"https://{bucketName}.s3.amazonaws.com"), sessionToken);
         }
 
         /// <summary>
@@ -145,21 +179,18 @@ namespace Stowage {
             string accessKeyId,
             string secretAccessKey) {
 
-            // create endpoint URI using bucketName as a subdomain and add to endpoint parameter
-            //var fullEndpoint = new Uri($"{endpoint.Scheme}://{bucketName}.{endpoint.Authority}");
-
             // bucket name should be included as a part of the path in Minio
             var bucketEndpoint = new Uri(endpoint, bucketName + "/");
 
             return new AwsS3FileStorage(
                bucketEndpoint,
-               new S3AuthHandler(accessKeyId, secretAccessKey, ""));
+               new S3AuthHandler(accessKeyId, secretAccessKey, null, ""));
         }
 
         public static IFileStorage DigitalOceanSpaces(this IFilesFactory _, string region, string accessKeyId, string secretAccessKey) {
             return new AwsS3FileStorage(
                new Uri($"https://{region}.digitaloceanspaces.com"),
-               new S3AuthHandler(accessKeyId, secretAccessKey, region));
+               new S3AuthHandler(accessKeyId, secretAccessKey, null, region));
         }
 
 
@@ -183,7 +214,10 @@ namespace Stowage {
             return new DatabricksRestClient(profileName);
         }
 
-        // todo: log callback
+        /// <summary>
+        /// Sets the logger for the library
+        /// </summary>
+        /// <param name="logMessage"></param>
         public static void SetLogger(Action<string> logMessage) {
             _logMessage = logMessage;
 
@@ -192,13 +226,16 @@ namespace Stowage {
             }
         }
 
+        /// <summary>
+        /// Returns true if the logger is set
+        /// </summary>
         public static bool HasLogger => _logMessage != null;
 
-        internal static void Log(string message) {
-            if(!HasLogger)
+        internal static void Log(string? message) {
+            if(!HasLogger || message == null)
                 return;
 
-            _logMessage(message);
+            _logMessage?.Invoke(message);
         }
 
     }

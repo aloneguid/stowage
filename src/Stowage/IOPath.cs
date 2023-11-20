@@ -42,6 +42,9 @@ namespace Stowage {
         private string _pathNoLeadingSlash;
         private string _pathWtithNoLeadingAndWithTralingSlash;
 
+        /// <summary>
+        /// Shorthand for root path
+        /// </summary>
         public static IOPath Root { get; } = new IOPath(RootFolderPath);
 
         public IOPath(string path) {
@@ -110,7 +113,7 @@ namespace Stowage {
             if(parts == null)
                 return Normalize(null);
 
-            string last = null;
+            string? last = null;
             var cp = new List<string>();
 
             foreach(string part in parts) {
@@ -344,10 +347,21 @@ namespace Stowage {
         public bool IsFile => !IsFolder;
 
         /// <summary>
+        /// Returns current local disk path if it was mapped to root.
+        /// </summary>
+        public static IOPath CurrenLocalDiskPathIfMappedToRoot {
+            get {
+                string cp = Environment.CurrentDirectory;
+                string path = cp.Replace("C:\\", "").Replace("\\", "/") + "/";
+                return new IOPath(path);
+            }
+        }
+
+        /// <summary>
         /// Equality check
         /// </summary>
         /// <param name="other"></param>
-        public bool Equals(IOPath other) {
+        public bool Equals(IOPath? other) {
 
             if(ReferenceEquals(other, null))
                 return false;
@@ -360,7 +374,7 @@ namespace Stowage {
         /// Equality check
         /// </summary>
         /// <param name="other"></param>
-        public override bool Equals(object other) {
+        public override bool Equals(object? other) {
             if(ReferenceEquals(other, null))
                 return false;
             if(ReferenceEquals(other, this))
@@ -376,6 +390,7 @@ namespace Stowage {
         /// </summary>
         public override int GetHashCode() => _path.GetHashCode();
 
+        /// <inheritdoc/>
         public override string ToString() => _path;
     }
 }

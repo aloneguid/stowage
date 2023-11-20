@@ -19,7 +19,7 @@ namespace Stowage.Impl.Amazon {
 
 
         public CredentialFileParser() {
-            _path = IOPath.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".aws", "credentials");
+            _path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".aws", "credentials");
             Exists = File.Exists(_path);
             _iniFile = Exists ? StructuredIniFile.FromString(File.ReadAllText(_path)) : null;
         }

@@ -21,13 +21,15 @@ namespace Stowage.Impl.Amazon {
     class S3AuthHandler : DelegatingHandler {
         private readonly string _accessKeyId;
         private readonly string _secretAccessKey;
+        private readonly string? _sessionToken;
         private readonly string _region;
         private readonly string _service;
         private static readonly string EmptySha256 = new byte[0].SHA256().ToHexString();
 
-        public S3AuthHandler(string accessKeyId, string secretAccessKey, string region, string service = "s3") : base(new HttpClientHandler()) {
+        public S3AuthHandler(string accessKeyId, string secretAccessKey, string? sessionToken, string region, string service = "s3") : base(new HttpClientHandler()) {
             _accessKeyId = accessKeyId;
             _secretAccessKey = secretAccessKey;
+            _sessionToken = sessionToken;
             _region = region;
             _service = service;
         }
@@ -52,6 +54,9 @@ namespace Stowage.Impl.Amazon {
             string amzNowDate = GetAmzDate(dateToUse);
 
             request.Headers.Add("x-amz-date", amzNowDate);
+            if(_sessionToken != null) {
+                request.Headers.Add("x-amz-security-token", _sessionToken);
+            }
 
             // 1. Create a canonical request
 
@@ -242,12 +247,9 @@ namespace Stowage.Impl.Amazon {
         }
 
         private static byte[] HmacSha256(string data, byte[] key) {
-            var alg = KeyedHashAlgorithm.Create("HmacSHA256");
-            if(alg == null) {
-                throw new InvalidOperationException("HmacSHA256 could not be instantiated");
-            }
-            alg.Key = key;
-            return alg.ComputeHash(Encoding.UTF8.GetBytes(data));
+
+            using HMACSHA256 hmac = new HMACSHA256(key);
+            return hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
         }
     }
 }

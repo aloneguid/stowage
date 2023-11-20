@@ -78,16 +78,16 @@ namespace Stowage.Impl {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
 
-            string npath = IOPath.Normalize(path);
+            string npath = IOPath.Normalize(path!);
 
             return Task.FromResult(CreateStream(npath));
         }
 
-        public override Task<Stream> OpenRead(IOPath path, CancellationToken cancellationToken) {
+        public override Task<Stream?> OpenRead(IOPath path, CancellationToken cancellationToken) {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
 
-            Stream result = OpenStream(path);
+            Stream? result = OpenStream(path!);
 
             return Task.FromResult(result);
         }
@@ -112,7 +112,7 @@ namespace Stowage.Impl {
             return path;
         }
 
-        private Stream OpenStream(string path) {
+        private Stream? OpenStream(string path) {
             path = GetFilePath(path, false);
 
             if(!SysIO.File.Exists(path))

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Stowage.Impl {
     static class Implicits {
-        public static void AssumeImplicitFolders(string absoluteRoot, List<IOEntry> entries) {
+        public static void AssumeImplicitFolders(string? absoluteRoot, List<IOEntry> entries) {
             absoluteRoot = IOPath.Normalize(absoluteRoot);
 
             List<IOEntry> implicitFolders = entries

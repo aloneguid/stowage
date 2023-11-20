@@ -3,6 +3,13 @@
 ### New features
 
 - S3 provider supports authentication with local AWS CLI profiles.
+- S3 factory methods allow specifying *session token* (for STS temporary credentials).
+
+### Bugs fixed
+
+- S3 `Ls` operation was returning it's own folder object in the list.
+- S3 `Ls` was facing number parsing overflow on multi-gigabyte files.
+- On some platforms `hmac256` was not working resulting in failure to sign AWS requests.
 
 ## 1.4.0
 

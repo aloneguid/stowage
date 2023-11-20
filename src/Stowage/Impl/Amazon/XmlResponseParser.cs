@@ -24,6 +24,7 @@ namespace Stowage.Impl.Amazon {
                         if(xr.NodeType == XmlNodeType.Element) {
                             switch(xr.Name) {
                                 case "Contents":
+                                    // object format specification: https://docs.aws.amazon.com/AmazonS3/latest/API/API_Object.html
                                     string? key = null;
                                     string? lastMod = null;
                                     string? eTag = null;
@@ -54,10 +55,10 @@ namespace Stowage.Impl.Amazon {
                                         }
                                     }
 
-                                    if(key != null) {
+                                    if(key != null && !key.EndsWith("/")) {
                                         var entry = new IOEntry(key) {
-                                            LastModificationTime = DateTimeOffset.Parse(lastMod),
-                                            Size = int.Parse(size)
+                                            LastModificationTime = lastMod == null ? null : DateTimeOffset.Parse(lastMod),
+                                            Size = size == null ? null : long.Parse(size)
                                         };
                                         entry.TryAddProperties(
                                            "ETag", eTag,

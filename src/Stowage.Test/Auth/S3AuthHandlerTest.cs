@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Stowage.Impl.Amazon;
 using Xunit;
 
 namespace Stowage.Test.Auth {
     class AuthHandlerWrapper : S3AuthHandler {
-        public AuthHandlerWrapper(string accessKeyId, string secretAccessKey, string region) : base(accessKeyId, secretAccessKey, region) {
+        public AuthHandlerWrapper(string accessKeyId, string secretAccessKey, string region) : base(accessKeyId, secretAccessKey, null, region) {
         }
 
         public async Task<HttpRequestMessage> Exec(HttpMethod method, string url, DateTimeOffset date, Dictionary<string, string> extraHeaders = null,

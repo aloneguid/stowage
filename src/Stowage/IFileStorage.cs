@@ -35,7 +35,7 @@ namespace Stowage {
         /// <exception cref="ArgumentException">Thrown when ID is too long. Long IDs are the ones longer than 50 characters.</exception>
         Task<Stream?> OpenRead(IOPath path, CancellationToken cancellationToken = default);
 
-        Task<string> ReadText(IOPath path, Encoding encoding = null, CancellationToken cancellationToken = default);
+        Task<string?> ReadText(IOPath path, Encoding? encoding = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Reads blob as utf-8 text, then uses <see cref="System.Text.Json"/> to deserialise as json object.
@@ -44,7 +44,7 @@ namespace Stowage {
         /// <param name="path"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<T> ReadAsJson<T>(IOPath path, CancellationToken cancellationToken = default);
+        Task<T?> ReadAsJson<T>(IOPath path, CancellationToken cancellationToken = default);
 
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Stowage {
         /// <returns></returns>
         Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default);
 
-        Task WriteText(IOPath path, string contents, Encoding encoding = null, CancellationToken cancellationToken = default);
+        Task WriteText(IOPath path, string contents, Encoding? encoding = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Uses <see cref="System.Text.Json"/> to first serialize the object, and then write it as utf-8 text.
