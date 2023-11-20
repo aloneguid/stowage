@@ -41,7 +41,7 @@ namespace Stowage
          await WriteText(path, json, null, cancellationToken);
       }
 
-      public abstract Task<Stream> OpenRead(IOPath path, CancellationToken cancellationToken = default);
+      public abstract Task<Stream?> OpenRead(IOPath path, CancellationToken cancellationToken = default);
 
       public virtual async Task<string> ReadText(IOPath path, Encoding encoding = null, CancellationToken cancellationToken = default)
       {

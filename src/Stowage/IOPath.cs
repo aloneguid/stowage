@@ -88,13 +88,18 @@ namespace Stowage {
         /// <summary>
         /// Constructs a file blob by full ID
         /// </summary>
-        public static implicit operator IOPath(string path) => new IOPath(path);
+        public static implicit operator IOPath?(string? path) {
+            if(path == null)
+                return null;
+
+            return new IOPath(path);
+        }
 
         /// <summary>
         /// Converts blob to string by using full path
         /// </summary>
         /// <param name="path"></param>
-        public static implicit operator string?(IOPath path) => path?.Full;
+        public static implicit operator string?(IOPath? path) => path?.Full;
 
         /// <summary>
         /// Combines parts of path
@@ -190,11 +195,13 @@ namespace Stowage {
         /// <param name="path"></param>
         /// <param name="removeLeadingSlash"></param>
         /// <param name="appendTrailingSlash"></param>
-        public static string Normalize(string path, bool removeLeadingSlash = false, bool appendTrailingSlash = false) {
+        public static string Normalize(string? path, bool removeLeadingSlash = false, bool appendTrailingSlash = false) {
             if(IsRoot(path))
                 return RootFolderPath;
 
-            string[] parts = Split(path);
+            string[]? parts = Split(path);
+            if(parts == null)
+                return RootFolderPath;
 
             var r = new List<string>(parts.Length);
             foreach(string part in parts) {
@@ -258,7 +265,7 @@ namespace Stowage {
         /// <summary>
         /// Checks if path is root folder path, which can be an empty string, null, or the actual root path.
         /// </summary>
-        public static bool IsRoot(string path) {
+        public static bool IsRoot(string? path) {
             return string.IsNullOrEmpty(path) || path == RootFolderPath;
         }
 

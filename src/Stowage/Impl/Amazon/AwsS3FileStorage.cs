@@ -24,7 +24,6 @@ namespace Stowage.Impl.Amazon {
             return _prefix == null ? path : path.Prefix(_prefix);
         }
 
-
         public override async Task<IReadOnlyCollection<IOEntry>> Ls(IOPath relPath, bool recurse = false, CancellationToken cancellationToken = default) {
 
             IOPath? path = GetFullPath(relPath);
@@ -70,7 +69,7 @@ namespace Stowage.Impl.Amazon {
             return result;
         }
 
-        public override async Task Rm(IOPath relPath, bool recurse, CancellationToken cancellationToken = default) {
+        public override async Task Rm(IOPath? relPath, bool recurse, CancellationToken cancellationToken = default) {
             if(relPath is null)
                 throw new ArgumentNullException(nameof(relPath));
 
@@ -86,11 +85,11 @@ namespace Stowage.Impl.Amazon {
 
         }
 
-        public override async Task<Stream> OpenRead(IOPath relPath, CancellationToken cancellationToken = default) {
+        public override async Task<Stream?> OpenRead(IOPath relPath, CancellationToken cancellationToken = default) {
             if(relPath is null)
                 throw new ArgumentNullException(nameof(relPath));
 
-            IOPath path = GetFullPath(relPath);
+            IOPath? path = GetFullPath(relPath);
 
             // call https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
             HttpResponseMessage response = await SendAsync(new HttpRequestMessage(HttpMethod.Get, $"{IOPath.Normalize(path, true)}"));
@@ -103,11 +102,11 @@ namespace Stowage.Impl.Amazon {
             return await response.Content.ReadAsStreamAsync();
         }
 
-        public override async Task<Stream> OpenWrite(IOPath relPath, CancellationToken cancellationToken = default) {
+        public override async Task<Stream> OpenWrite(IOPath? relPath, CancellationToken cancellationToken = default) {
             if(relPath is null)
                 throw new ArgumentNullException(nameof(relPath));
 
-            IOPath path = GetFullPath(relPath);
+            IOPath? path = GetFullPath(relPath);
             string npath = IOPath.Normalize(path, true);
 
             // initiate upload and get upload ID
