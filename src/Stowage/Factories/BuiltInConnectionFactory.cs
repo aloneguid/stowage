@@ -35,6 +35,14 @@ namespace Stowage.Factories {
                 return new DatabricksRestClient(new Uri(url), token);
             }
 
+            if(connectionString.Prefix == "s3") {
+                connectionString.GetRequired(KnownParameter.BucketName, true, out string bucketName);
+                connectionString.GetRequired(KnownParameter.Region, true, out string region);
+                connectionString.GetRequired(KnownParameter.AwsProfile, true, out string profileName);
+
+                return Files.Of.AmazonS3(bucketName, region, profileName);
+            }
+
             return null;
         }
     }

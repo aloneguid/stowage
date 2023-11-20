@@ -33,7 +33,7 @@ namespace Stowage {
         /// stream after use.</returns>
         /// <exception cref="ArgumentNullException">Thrown when any parameter is null</exception>
         /// <exception cref="ArgumentException">Thrown when ID is too long. Long IDs are the ones longer than 50 characters.</exception>
-        Task<Stream> OpenRead(IOPath path, CancellationToken cancellationToken = default);
+        Task<Stream?> OpenRead(IOPath path, CancellationToken cancellationToken = default);
 
         Task<string> ReadText(IOPath path, Encoding encoding = null, CancellationToken cancellationToken = default);
 

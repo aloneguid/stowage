@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Runtime.CompilerServices;
 using Stowage.Impl;
 using Stowage.Impl.Amazon;
@@ -112,6 +113,20 @@ namespace Stowage {
             return new AwsS3FileStorage(
                endpoint,
                new S3AuthHandler(accessKeyId, secretAccessKey, region));
+        }
+
+        /// <summary>
+        /// Creates Amazon S3 provider using AWS CLI profile name
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="bucketName"></param>
+        /// <param name="region"></param>
+        /// <param name="profileName"></param>
+        /// <returns></returns>
+        public static IFileStorage AmazonS3(this IFilesFactory _, string bucketName, string region, string profileName = "default") {
+            var parser = new CredentialFileParser();
+            parser.FillCredentials(profileName, out string? accessKeyId, out string? secretAccessKey, out string? sessionToken);
+            return AmazonS3(_, accessKeyId, secretAccessKey, region, new Uri($"https://{bucketName}.s3.amazonaws.com"));
         }
 
         /// <summary>
