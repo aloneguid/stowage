@@ -153,7 +153,8 @@ namespace Stowage {
 
             return new AwsS3FileStorage(
                bucketEndpoint,
-               new S3AuthHandler(accessKeyId, secretAccessKey, ""));
+               new S3AuthHandler(accessKeyId, secretAccessKey, ""),
+               supportsMultiPartUpload: false);
         }
 
         public static IFileStorage DigitalOceanSpaces(this IFilesFactory _, string region, string accessKeyId, string secretAccessKey) {

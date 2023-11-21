@@ -14,7 +14,7 @@ namespace Stowage.Impl.Amazon {
         private readonly IOPath? _prefix;
         private readonly bool _supportsMultiPartUpload;
 
-        public AwsS3FileStorage(Uri endpoint, DelegatingHandler authHandler, IOPath? prefix = null, bool supportsMultiPartUpload = false) :
+        public AwsS3FileStorage(Uri endpoint, DelegatingHandler authHandler, IOPath? prefix = null, bool supportsMultiPartUpload = true) :
            base(endpoint, authHandler) {
             _prefix = prefix;
             _supportsMultiPartUpload = supportsMultiPartUpload;
