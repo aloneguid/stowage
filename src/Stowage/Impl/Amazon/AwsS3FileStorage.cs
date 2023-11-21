@@ -12,10 +12,12 @@ namespace Stowage.Impl.Amazon {
     sealed class AwsS3FileStorage : PolyfilledHttpFileStorage {
         private readonly XmlResponseParser _xmlParser = new XmlResponseParser();
         private readonly IOPath? _prefix;
+        private readonly bool _supportsMultiPartUpload;
 
-        public AwsS3FileStorage(Uri endpoint, DelegatingHandler authHandler, IOPath? prefix = null) :
+        public AwsS3FileStorage(Uri endpoint, DelegatingHandler authHandler, IOPath? prefix = null, bool supportsMultiPartUpload = false) :
            base(endpoint, authHandler) {
             _prefix = prefix;
+            _supportsMultiPartUpload = supportsMultiPartUpload;
         }
 
         private IOPath? GetFullPath(IOPath? path) {
@@ -109,14 +111,18 @@ namespace Stowage.Impl.Amazon {
             IOPath? path = GetFullPath(relPath);
             string npath = IOPath.Normalize(path, true);
 
-            // initiate upload and get upload ID
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{npath}?uploads");
-            HttpResponseMessage response = await SendAsync(request);
-            response.EnsureSuccessStatusCode();
-            string xml = await response.Content.ReadAsStringAsync(); // this contains UploadId
-            string uploadId = _xmlParser.ParseInitiateMultipartUploadResponse(xml);
+            if(_supportsMultiPartUpload) {
+                // initiate upload and get upload ID
+                var request = new HttpRequestMessage(HttpMethod.Post, $"/{npath}?uploads");
+                HttpResponseMessage response = await SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                string xml = await response.Content.ReadAsStringAsync(); // this contains UploadId
+                string uploadId = _xmlParser.ParseInitiateMultipartUploadResponse(xml);
 
-            return new AwsWriteStream(this, npath, uploadId);
+                return new AwsMultiPartWriteStream(this, npath, uploadId);
+            }
+
+            return new AwsWriteStream(this, npath);
         }
 
         // https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
@@ -164,6 +170,16 @@ namespace Stowage.Impl.Amazon {
 
         public async Task CompleteMultipartUploadAsync(string key, string uploadId, IEnumerable<string> partTags) {
             (await SendAsync(CreateCompleteMultipartUploadRequest(key, uploadId, partTags))).EnsureSuccessStatusCode();
+        }
+
+        public void CompleteUpload(string key, Stream content) {
+            using var request = new HttpRequestMessage(HttpMethod.Put, $"/{key}") { Content = new StreamContent(content) };
+            Send(request).EnsureSuccessStatusCode();
+        }
+
+        public async Task CompleteUploadAsync(string key, Stream content) {
+            using var request = new HttpRequestMessage(HttpMethod.Put, $"/{key}") { Content = new StreamContent(content) };
+            (await SendAsync(request)).EnsureSuccessStatusCode();
         }
     }
 }
