@@ -1,13 +1,13 @@
-name: main
+name: build
 
 env:
-  v: '1.2.7'
+  v: '1.4.0'
   av: '1.0.0'
 
 on:
   push:
     branches: [ master ]
-    paths-ignore: [ "**/*.md" ]
+    paths-ignore: [ "docs/*" ]
 
   pull_request:
     branches: [ master ]
@@ -27,33 +27,28 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
     - name: Install dependencies
       run: dotnet restore src/Stowage.sln
+
     - name: Build
       run: dotnet build src/Stowage.sln --configuration Release --no-restore /p:Version=${{ env.v }} /p:FileVersion=${{ env.v }} /p:AssemblyVersion=${{ env.av }}
+
     - name: Test
       run: dotnet test src/Stowage.sln -c release --filter Category!=Integration --no-restore --verbosity normal /p:Version=${{ env.v }} /p:FileVersion=${{ env.v }} /p:AssemblyVersion=${{ env.av }}
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.2.1
-      with:
-        name: packages
-        path: src/**/*.nupkg
 
-  publish:
-    needs: [build]
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v2.0.6
-        with:
-          name: packages
-      - name: Push to nuget.org
-        run: dotnet nuget push Stowage/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: github.ref == 'refs/heads/master'
-        with:
-          tag_name: ${{ env.v }}
-          name: ${{ env.v }}
+    - name: collect artifacts
+      run: |
+        mkdir artifacts
+        cp src/Stowage/bin/Release/*.nupkg artifacts/
+        echo "${{ env.v }}" >> artifacts/version.txt
+        cp docs/release-history.md artifacts/
+
+    - uses: actions/upload-artifact@v3
+      name: upload artifacts
+      with:
+        name: bin
+        path: artifacts/*

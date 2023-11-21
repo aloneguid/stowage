@@ -10,7 +10,7 @@ namespace Stowage
 {
    abstract class PolyfilledFileStorage : IFileStorage
    {
-      public abstract Task<IReadOnlyCollection<IOEntry>> Ls(IOPath path = null, bool recurse = false, CancellationToken cancellationToken = default);
+      public abstract Task<IReadOnlyCollection<IOEntry>> Ls(IOPath? path = null, bool recurse = false, CancellationToken cancellationToken = default);
 
       public abstract Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default);
 
@@ -41,7 +41,7 @@ namespace Stowage
          await WriteText(path, json, null, cancellationToken);
       }
 
-      public abstract Task<Stream> OpenRead(IOPath path, CancellationToken cancellationToken = default);
+      public abstract Task<Stream?> OpenRead(IOPath path, CancellationToken cancellationToken = default);
 
       public virtual async Task<string> ReadText(IOPath path, Encoding encoding = null, CancellationToken cancellationToken = default)
       {

@@ -1,7 +1,7 @@
 ﻿# Stowage [![Nuget](https://img.shields.io/nuget/v/Stowage?style=for-the-badge)](https://www.nuget.org/packages/Stowage)
 
 
-![](media/icon/icon-256.png)
+![](../media/icon/icon-256.png)
 
 **Stowage** is a **bloat-free .NET cloud storage kit** that supports at minimum THE major ☁ providers.
 
@@ -25,8 +25,7 @@ Simplest case, using the local 💽 and writing text "I'm a page!!!" to a file c
 ```csharp
 using Stowage;
 
-using(IFileStorage fs = Files.Of.LocalDisk("c:\\"))
-{
+using(IFileStorage fs = Files.Of.LocalDisk("c:\\")) {
    await fs.WriteText("pagefile.sys", "I'm a page!!!!");
 }
 ```
@@ -36,8 +35,7 @@ This is local disk, yeah? But what about cloud storage, like Azure Blob Storage?
 ```csharp
 using Stowage;
 
-using(IFileStorage fs = Files.Of.AzureBlobStorage("accountName", "accountKey", "containerName"))
-{
+using(IFileStorage fs = Files.Of.AzureBlobStorage("accountName", "accountKey", "containerName")) {
    var entries = await fs.Ls();
 }
 ```
@@ -106,6 +104,9 @@ There are other useful utility methods:
 - Local Disk Directory (`Files.Of.LocalDisk(...)`).
 - In-Memory (`Files.Of.InternalMemory(...)`).
 - [AWS S3](https://aws.amazon.com/s3/) (`Files.Of.AmazonS3(...)`).
+  - [Minio](https://min.io/) (`Files.Of.Minio(...)`).
+  - [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces) (`Files.Of.DigitalOceanSpaces(...)`).
+
 - [Azure Blob Storage](https://azure.microsoft.com/en-gb/services/storage/blobs/) / [Data Lake Gen 2](https://docs.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-introduction#key-features-of-data-lake-storage-gen2) (`Files.Of.AzureBlobStorage(...)`).
 - [Google Cloud Storage](https://cloud.google.com/storage) (`Files.Of.GoogleCloudStorage(...)`).
 - [Databricks DBFS](https://docs.databricks.com/data/databricks-file-system.html) (`Files.Of.DatabricksDbfs(...)`).
