@@ -7,6 +7,7 @@
         <Nullable>enable</Nullable>
         <!--<PublishAot>true</PublishAot>-->
         <PublishTrimmed>true</PublishTrimmed>
+        <PublishSingleFile>true</PublishSingleFile>
         <InvariantGlobalization>false</InvariantGlobalization>
         <AssemblyName>swt</AssemblyName>
     </PropertyGroup>

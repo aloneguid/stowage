@@ -76,13 +76,13 @@ jobs:
 
     - name: 💨 Windows x64
       run: |
-         dotnet publish -c release -o pub/win-x64 -r win-x64 --self-contained -p:Version=${{ env.v }} -p:FileVersion=${{ env.v }} -p:AssemblyVersion=${{ env.av }}
+         dotnet publish -c release -o pub/win-x64 -r win-x64 p:Version=${{ env.v }} -p:FileVersion=${{ env.v }} -p:AssemblyVersion=${{ env.av }}
          zip -9 -j swt-win-x64.zip pub/win-x64/swt.exe
       working-directory: ./src/Stowage.Terminal
 
     - name: Linux
       run: |
-         dotnet publish -c release -o pub/linux-x64 -r linux-x64 --self-contained -p:PublishReadyToRun=true -p:Version=${{ env.v }} -p:FileVersion=${{ env.v }} -p:AssemblyVersion=${{ env.av }}
+         dotnet publish -c release -o pub/linux-x64 -r linux-x64 -p:Version=${{ env.v }} -p:FileVersion=${{ env.v }} -p:AssemblyVersion=${{ env.av }}
          zip -9 -j swt-linux-x64.zip pub/linux-x64/swt
       working-directory: ./src/Stowage.Terminal
 
