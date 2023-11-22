@@ -177,14 +177,15 @@ namespace Stowage {
             Uri endpoint,
             string bucketName,
             string accessKeyId,
-            string secretAccessKey) {
+            string secretAccessKey,
+            string region = "") {
 
             // bucket name should be included as a part of the path in Minio
             var bucketEndpoint = new Uri(endpoint, bucketName + "/");
 
             return new AwsS3FileStorage(
                bucketEndpoint,
-               new S3AuthHandler(accessKeyId, secretAccessKey, null, ""));
+               new S3AuthHandler(accessKeyId, secretAccessKey, null, region));
         }
 
         public static IFileStorage DigitalOceanSpaces(this IFilesFactory _, string region, string accessKeyId, string secretAccessKey) {
