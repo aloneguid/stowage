@@ -22,7 +22,7 @@ namespace Stowage.Terminal {
         private readonly ProgressBar _progressTotal;
         private readonly ProgressBar _progressCurrent;
         private readonly Label _labelTotal;
-        private readonly Label _labelCurrent;
+        //private readonly Label _labelCurrent;
         private long _copiedTotal = 0;
         private long _sizeTotal = 0;
 
@@ -37,7 +37,7 @@ namespace Stowage.Terminal {
                 _cts.Cancel();
             };
 
-            _dialog = new Dialog("Copy files", width / 2, 10, cancel);
+            _dialog = new Dialog("Copy files", width / 2, 7, cancel);
 
             var lbl = new Label("  total: ") { X = 0, Y = 0 };
             _dialog.Add(lbl);
@@ -50,21 +50,24 @@ namespace Stowage.Terminal {
             };
             _dialog.Add(_progressTotal);
 
-            _labelTotal = new Label("0 / 0") { X = 0, Y = Pos.Bottom(lbl) };
-            _dialog.Add(_labelTotal);
+            //_labelTotal = new Label("0 / 0") { X = 0, Y = Pos.Bottom(lbl) };
+            //_dialog.Add(_labelTotal);
 
-            lbl = new Label("current: ") { X = 0, Y = Pos.Bottom(_labelTotal) };
+            lbl = new Label("current: ") { X = 0, Y = Pos.Bottom(lbl) };
             _dialog.Add(lbl);
             _progressCurrent = new ProgressBar() {
                 X = Pos.Right(lbl),
-                Y = Pos.Bottom(_progressTotal),
+                Y = 1,
                 Width = Dim.Fill(),
                 Height = 1
             };
             _dialog.Add(_progressCurrent);
 
-            _labelCurrent = new Label("0 / 0") { X = 0, Y = Pos.Bottom(lbl) };
-            _dialog.Add(_labelCurrent);
+            //_labelCurrent = new Label("0 / 0") { X = 0, Y = Pos.Bottom(lbl) };
+            //_dialog.Add(_labelCurrent);
+
+            _labelTotal = new Label("?") { X = 0, Y = Pos.Bottom(lbl) };
+            _dialog.Add(_labelTotal);
         }
 
         public void Start() {
@@ -98,15 +101,21 @@ namespace Stowage.Terminal {
                     byte[] buffer = ArrayPool<byte>.Shared.Rent(DefaultCopyBufferSize);
                     try {
                         int bytesRead;
+                        long totalRead = 0;
                         while((bytesRead = await streamFrom.ReadAsync(new Memory<byte>(buffer), _cts.Token)) != 0) {
                             await streamTo.WriteAsync(new ReadOnlyMemory<byte>(buffer, 0, bytesRead), _cts.Token);
-                            float fraction = streamFrom.Position / (float)streamFrom.Length;
+
+                            _copiedTotal += bytesRead;
+                            totalRead += bytesRead;
+                            float fracCurrent = totalRead / (float)streamFrom.Length;
+                            float fracTotal = _copiedTotal / (float)_sizeTotal;
+                            string status = $"{_copiedTotal.Bytes()} / {_sizeTotal.Bytes()}";
 
                             Application.MainLoop.Invoke(() => {
-                                _progressCurrent.Fraction = fraction;
-                                _copiedTotal += bytesRead;
-                                _labelCurrent.Text = $"{streamFrom.Position.Bytes()} / {streamFrom.Length.Bytes()}";
-                                _labelTotal.Text = $"{_copiedTotal.Bytes()} / {_sizeTotal.Bytes()}";
+
+                                _progressCurrent.Fraction = fracCurrent;
+                                _progressTotal.Fraction = fracTotal;
+                                _labelTotal.Text = status;
                             });
                         }
 
@@ -127,14 +136,8 @@ namespace Stowage.Terminal {
                     IReadOnlyCollection<IOEntry> sourceEntries = await Explode(_from.Fs, _from.SelectedEntry!);
                     _sizeTotal = sourceEntries.Sum(e => e.Size!.Value);
 
-                    int i = 0;
                     foreach(IOEntry entry in sourceEntries) {
-
                         await Copy(_from.Fs, _to.Fs, entry.Path, _to.CurrentPath.Combine(entry.Path.Name));
-
-                        Application.MainLoop.Invoke(() => {
-                            _progressTotal.Fraction = i++ * 100.0f / sourceEntries.Count;
-                        });
                     }
                 } catch(Exception ex1) {
                     ex = ex1;
@@ -143,8 +146,10 @@ namespace Stowage.Terminal {
                 Application.MainLoop.Invoke(() => {
                     if(ex != null) {
                         MessageBox.ErrorQuery(60, 10, "Error", ex.ToString(), "Ok");
+                    } else {
+                        MessageBox.Query(60, 5, "Done", "Files copied.", "Ok");
+                        Application.RequestStop();
                     }
-                    Application.RequestStop();
                 });
             });
         }

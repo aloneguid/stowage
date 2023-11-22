@@ -49,8 +49,7 @@ namespace Stowage.Terminal {
             _statusBar = new StatusBar(new StatusItem[] {
                 new StatusItem(Key.F2, "~F2~ Save", SaveContent),
                 _statusSize,
-                _statusCursorPos,
-                new StatusItem(Key.F10, "~F10~ Close", () => Application.RequestStop())
+                _statusCursorPos
             });
 
             Add(_textView);
