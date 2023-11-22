@@ -18,12 +18,12 @@ jobs:
 
       - name: 🔢 prep environment
         run: |
-          echo "VERSION=$(cat bin/version.txt)" >> "$GITHUB_ENV"
-          grep -m1 -B 1000 '^##\s' bin/release-history.md | tail -n +3 | head -n -2 > release-notes.md
+          echo "VERSION=$(cat lib/version.txt)" >> "$GITHUB_ENV"
+          grep -m1 -B 1000 '^##\s' lib/release-history.md | tail -n +3 | head -n -2 > release-notes.md
           cat release-notes.md
 
       - name: 📢 Push to nuget.org
-        run: dotnet nuget push bin/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push lib/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: 🥰 Create a release
         uses: softprops/action-gh-release@v1
@@ -32,6 +32,6 @@ jobs:
           tag_name: ${{ env.VERSION }}
           name: ${{ env.VERSION }}
           files: |
-            bin/*.nupkg
+            lib/*.nupkg
           body_path: release-notes.md
           # discussion_category_name: announcements

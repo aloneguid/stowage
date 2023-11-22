@@ -13,17 +13,7 @@ namespace Stowage.Terminal {
 
         public AppTopLevel(IFileStorage fs) {
             _fs = fs;
-            //ColorScheme = Colors.Base;
-
-            //MenuBar = new MenuBar(new MenuBarItem[] {
-            //    new MenuBarItem("_File", new MenuItem[] {
-            //        new MenuItem("_Quit", "", () => Application.RequestStop()),
-            //    }),
-            //    new MenuBarItem("_Help", new MenuItem[] {
-            //        new MenuItem("_About", "", () => MessageBox.Query(50, 7, "About", "Stowage.Terminal", "Ok")),
-            //    }),
-            //});
-            //MenuBar.Visible = true;
+            ColorScheme = Colors.Base;
 
             _fsView1 = new FSView(_fs) {
                 X = 0,

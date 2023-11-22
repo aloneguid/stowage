@@ -1,8 +1,9 @@
-name: build
+﻿name: build
 
 env:
   v: '1.5.0'
   av: '1.0.0'
+  swtv: '0.0.1'
 
 on:
   push:
@@ -15,7 +16,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-lib:
 
     runs-on: ubuntu-latest
 
@@ -50,5 +51,45 @@ jobs:
     - uses: actions/upload-artifact@v3
       name: upload artifacts
       with:
-        name: bin
+        name: lib
         path: artifacts/*
+
+
+  build-swt:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      name: Check-out source code
+      with:
+        submodules: true
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Install dependencies
+      run: dotnet restore
+      working-directory: src/Stowage.Terminal
+
+    - name: 💨 Windows x64
+      run: |
+         dotnet publish -c release -o pub/win-x64 -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=true -p:Version=${{ env.v }} -p:FileVersion=${{ env.v }} -p:AssemblyVersion=${{ env.av }}
+         zip -9 -j swt-win-x64.zip pub/win-x64/swt.exe
+      working-directory: ./src/Stowage.Terminal
+
+    - name: Linux
+      run: |
+         dotnet publish -c release -o pub/linux -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=true -p:PublishReadyToRun=true -p:Version=${{ env.v }} -p:FileVersion=${{ env.v }} -p:AssemblyVersion=${{ env.av }}
+         zip -9 -j swt-linux-x64.zip pub/linux-x64/swt
+      working-directory: ./src/Stowage.Terminal
+
+    - uses: actions/upload-artifact@v3
+      name: upload artifacts
+      with:
+        name: swt
+        path: ./src/Stowage.Terminal/pub/**/*.zip
+
+
