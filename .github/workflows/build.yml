@@ -90,6 +90,6 @@ jobs:
       name: upload artifacts
       with:
         name: swt
-        path: ./src/Stowage.Terminal/pub/**/*.zip
+        path: ./src/Stowage.Terminal/pub/*
 
 
