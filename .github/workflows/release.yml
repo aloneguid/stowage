@@ -19,7 +19,7 @@ jobs:
       - name: 🔢 prep environment
         run: |
           echo "VERSION=$(cat bin/version.txt)" >> "$GITHUB_ENV"
-          grep -m 2 -B 1000 '^## ' bin/release-history.md | tail -n +3 | head -n -2 > release-notes.md
+          grep -m1 -B 1000 '^##\s' bin/release-history.md | tail -n +3 | head -n -2 > release-notes.md
           cat release-notes.md
 
       - name: 📢 Push to nuget.org
