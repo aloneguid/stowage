@@ -10,6 +10,7 @@
 - S3 `Ls` operation was returning it's own folder object in the list.
 - S3 `Ls` was facing number parsing overflow on multi-gigabyte files.
 - On some platforms `hmac256` was not working resulting in failure to sign AWS requests.
+- Multi-part uploads in S3 were sometimes not calculating chunk sizes properly.
 
 ## 1.4.0
 

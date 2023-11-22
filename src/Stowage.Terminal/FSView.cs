@@ -3,17 +3,13 @@ using Terminal.Gui;
 
 namespace Stowage.Terminal {
     class FSView : View {
-        private readonly IFileStorage _fs;
-        private IOPath _currentPath;
         private readonly Label _pathLabel;
         private readonly ListView _entryList = new ListView();
-        private IOEntry? _activeEntry = null;
 
         public event Action<IFileStorage, IOEntry> SelectedEntryChanged;
-
         public FSView(IFileStorage fs, IOPath? startPath = null) {
-            _fs = fs;
-            _currentPath = startPath ?? IOPath.Root;
+            Fs = fs;
+            CurrentPath = startPath ?? IOPath.Root;
             _pathLabel = new Label() { X = 0, Y = 0 };
 
             Add(new Label("Name") { X = 2, Y = 1, ColorScheme = Colors.Menu });
@@ -39,13 +35,17 @@ namespace Stowage.Terminal {
             _entryList.SelectedItemChanged += _entryList_SelectedItemChanged;
         }
 
+        public IFileStorage Fs { get; init; }
+        public IOEntry? SelectedEntry { get; private set; }
+        public IOPath CurrentPath { get; private set; }
+
         private void _entryList_SelectedItemChanged(ListViewItemEventArgs args) {
             if(args.Value is not IOEntry entry)
                 return;
 
-            _activeEntry = entry;
+            SelectedEntry = entry;
 
-            SelectedEntryChanged?.Invoke(_fs, entry);
+            SelectedEntryChanged?.Invoke(Fs, entry);
         }
 
         private void _entryList_OpenSelectedItem(ListViewItemEventArgs args) {
@@ -55,23 +55,23 @@ namespace Stowage.Terminal {
             if(entry.Path.IsFolder) {
                 // enter the folder
                 if(entry.Name == "../")
-                    _currentPath = _currentPath.Parent;
+                    CurrentPath = CurrentPath.Parent;
                 else
-                    _currentPath = entry.Path;
+                    CurrentPath = entry.Path;
                 Ls();
             } else {
 
             }
         }
 
-        private void Ls() {
+        public void Ls() {
             Task.Run(async () => {
                 try {
-                    _pathLabel.Text = _currentPath.Full;
-                    IReadOnlyCollection<IOEntry> entries = await _fs.Ls(_currentPath);
+                    _pathLabel.Text = CurrentPath.Full;
+                    IReadOnlyCollection<IOEntry> entries = await Fs.Ls(CurrentPath);
 
                     Application.MainLoop.Invoke(() => {
-                        _entryList.Source = new IOEntryListDataSource(entries, _currentPath.IsRootPath);
+                        _entryList.Source = new IOEntryListDataSource(entries, CurrentPath.IsRootPath);
                     });
                 } catch(Exception ex) {
                     MessageBox.ErrorQuery(60, 10, "Error", ex.ToString(), "Ok");
@@ -125,7 +125,7 @@ namespace Stowage.Terminal {
 
         public void ShowEntryDetails() {
 
-            if(_activeEntry == null)
+            if(SelectedEntry == null)
                 return;
 
             var close = new Button("Close", true);
@@ -135,15 +135,15 @@ namespace Stowage.Terminal {
 
             var dialog = new Dialog("Entry Details", 70, 20, close);
             var props = new List<string>{
-                "name", _activeEntry.Name,
-                "size", _activeEntry.Size == null ? "" : _activeEntry.Size.Value.Bytes().Humanize(),
-                "created", _activeEntry.CreatedTime == null ? "" : _activeEntry.CreatedTime.Value.ToString(),
-                "modified", _activeEntry.LastModificationTime == null ? "" : _activeEntry.LastModificationTime.Value.ToString(),
-                "MD-5", _activeEntry.MD5
+                "name", SelectedEntry.Name,
+                "size", SelectedEntry.Size == null ? "" : SelectedEntry.Size.Value.Bytes().Humanize(),
+                "created", SelectedEntry.CreatedTime == null ? "" : SelectedEntry.CreatedTime.Value.ToString(),
+                "modified", SelectedEntry.LastModificationTime == null ? "" : SelectedEntry.LastModificationTime.Value.ToString(),
+                "MD-5", SelectedEntry.MD5
             };
 
-            if(_activeEntry.Properties != null)
-                props.AddRange(_activeEntry.Properties.SelectMany(p => new[] { p.Key, p.Value?.ToString() }));
+            if(SelectedEntry.Properties != null)
+                props.AddRange(SelectedEntry.Properties.SelectMany(p => new[] { p.Key, p.Value?.ToString() }));
 
             // basic properties
             AddProperties(dialog, 20, props.ToArray());
@@ -152,39 +152,33 @@ namespace Stowage.Terminal {
         }
 
         public void ViewEntry() {
-            if(_activeEntry == null)
+            if(SelectedEntry == null)
                 return;
 
-            var editor = new TextFileEditorWindow(_fs, _activeEntry);
+            var editor = new TextFileEditorWindow(Fs, SelectedEntry);
             Application.Run(editor);
-
-
-            //var viewer = new Dialog(_activeEntry.Name) {
-            //    X = 2,
-            //    Y = 2,
-            //    Width = Dim.Fill() - 4,
-            //    Height = Dim.Fill() - 4
-            //};
-            //var label = new Label("Loading...") {
-            //    X = 0,
-            //    Y = 0,
-            //    Width = Dim.Fill(),
-            //    Height = Dim.Fill()
-            //};
-            //viewer.Add(label);
-
-            //Task.Run(async () => {
-            //    try {
-            //        string? content = await _fs.ReadText(_activeEntry.Path);
-            //        Application.MainLoop.Invoke(() => {
-            //            label.Text = content;
-            //        });
-            //    } catch(Exception ex) {
-            //        Console.WriteLine(ex.ToString());
-            //    }
-            //});
-
-            //Application.Run(viewer);
         }
+
+        public void DeleteEntry() {
+            if(SelectedEntry == null)
+                return;
+
+            if(0 == MessageBox.Query("Delete", $"Delete '{SelectedEntry.Path.Full}'?", "Yes", "No")) {
+                Task.Run(async () => {
+                    try {
+                        await Fs.Rm(SelectedEntry.Path);
+
+                        Application.MainLoop.Invoke(() => {
+                            MessageBox.Query("Deleted", "Object(s) deleted.", "Ok");
+                        });
+
+                        Ls();
+                    } catch(Exception ex) {
+                        MessageBox.ErrorQuery(60, 10, "Error", ex.ToString(), "Ok");
+                    }
+                });
+            }
+        }
+
     }
 }

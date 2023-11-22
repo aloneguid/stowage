@@ -51,13 +51,14 @@ namespace Stowage.Terminal {
                 new StatusItem(Key.F4, "~F4~ Edit", () => {
                     GetFocusedView().ViewEntry();
                 }),
-                new StatusItem(Key.F5, "~F5~ Copy", () => {
-                    CopyFiles();
-                    
+                new StatusItem(Key.F5, "~F5~ Copy", CopyFiles),
+                new StatusItem(Key.R | Key.CtrlMask, "~Ctrl-R~ Rescan", () => {
+                    GetFocusedView().Ls();
                 }),
-                new StatusItem(Key.F10, "~F10~ Quit", () => {
-                    RequestStop();
-                })
+                new StatusItem(Key.Delete, "~Del~ Delete", () => {
+                    GetFocusedView().DeleteEntry();
+                }),
+                new StatusItem(Key.F10, "~F10~ Quit", RequestStop)
 
             };
 
@@ -106,7 +107,7 @@ namespace Stowage.Terminal {
             if(_fsView1.HasFocus)
                 return _fsView2;
 
-            return _fsView2;
+            return _fsView1;
         }
 
 
