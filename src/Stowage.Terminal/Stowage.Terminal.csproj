@@ -8,6 +8,7 @@
         <!--<PublishAot>true</PublishAot>-->
         <PublishTrimmed>true</PublishTrimmed>
         <PublishSingleFile>true</PublishSingleFile>
+        <!-- this can be turned on when Humanizr supports it (https://github.com/Humanizr/Humanizer/pull/1213)-->
         <InvariantGlobalization>false</InvariantGlobalization>
         <AssemblyName>swt</AssemblyName>
     </PropertyGroup>
@@ -18,7 +19,6 @@
 
     <ItemGroup>
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
-        <PackageReference Include="Spectre.Console.Cli" Version="0.48.0" />
         <PackageReference Include="Terminal.Gui" Version="1.14.1" />
     </ItemGroup>
 

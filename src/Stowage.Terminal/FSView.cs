@@ -5,6 +5,7 @@ namespace Stowage.Terminal {
     class FSView : View {
         private readonly Label _pathLabel;
         private readonly ListView _entryList = new ListView();
+        private readonly IOEntryListDataSource _entryListSource = new IOEntryListDataSource();
 
         public event Action<IFileStorage, IOEntry> SelectedEntryChanged;
         public FSView(IFileStorage fs, IOPath? startPath = null) {
@@ -22,6 +23,7 @@ namespace Stowage.Terminal {
                 Y = 1,
                 ColorScheme = Colors.Menu });
 
+            _entryList.Source = _entryListSource;
             _entryList.X = 0;
             _entryList.Y = 2;
             _entryList.Width = Dim.Fill();
@@ -38,6 +40,22 @@ namespace Stowage.Terminal {
 
             _entryList.OpenSelectedItem += _entryList_OpenSelectedItem;
             _entryList.SelectedItemChanged += _entryList_SelectedItemChanged;
+            _entryList.KeyPress += _entryList_KeyPress;
+        }
+
+        private void _entryList_KeyPress(KeyEventEventArgs args) {
+
+            switch(args.KeyEvent.Key) {
+                case Key.DeleteChar:
+                case Key.d:
+                    args.Handled = true;
+                    DeleteEntry();
+                    break;
+                case Key.Backspace:
+                    args.Handled = true;
+                    GoUp();
+                    break;
+            }
         }
 
         public IFileStorage Fs { get; init; }
@@ -53,33 +71,46 @@ namespace Stowage.Terminal {
             SelectedEntryChanged?.Invoke(Fs, entry);
         }
 
+        private void GoUp() {
+            CurrentPath = CurrentPath.Parent;
+            Ls();
+        }
+
         private void _entryList_OpenSelectedItem(ListViewItemEventArgs args) {
             if(args.Value is not IOEntry entry)
                 return;
 
             if(entry.Path.IsFolder) {
                 // enter the folder
-                if(entry.Name == "../")
-                    CurrentPath = CurrentPath.Parent;
-                else
+                if(entry.Name == "../") {
+                    GoUp();
+                } else {
                     CurrentPath = entry.Path;
-                Ls();
+                    Ls();
+                }
             } else {
-
+                // todo: open locally?
             }
         }
 
-        public void Ls() {
+        public void Ls(bool keepSelection = false) {
+            _pathLabel.Text = CurrentPath.Full;
+
             Task.Run(async () => {
                 try {
-                    _pathLabel.Text = CurrentPath.Full;
                     IReadOnlyCollection<IOEntry> entries = await Fs.Ls(CurrentPath);
 
                     Application.MainLoop.Invoke(() => {
-                        _entryList.Source = new IOEntryListDataSource(entries, CurrentPath.IsRootPath);
+                        _entryListSource.Rebind(entries, CurrentPath.IsRootPath);
+                        if(!keepSelection) {
+                            _entryList.SelectedItem = 0;
+                        }
+                        _entryList.SetNeedsDisplay();
                     });
                 } catch(Exception ex) {
-                    MessageBox.ErrorQuery(60, 10, "Error", ex.ToString(), "Ok");
+                    Application.MainLoop.Invoke(() => {
+                        MessageBox.ErrorQuery(60, 10, "Error", ex.ToString(), "Ok");
+                    });
                 }
             });
         }
@@ -127,7 +158,6 @@ namespace Stowage.Terminal {
             }
         }
 
-
         public void ShowEntryDetails() {
 
             if(SelectedEntry == null)
@@ -172,12 +202,13 @@ namespace Stowage.Terminal {
                 Task.Run(async () => {
                     try {
                         await Fs.Rm(SelectedEntry.Path);
+                        int idx = _entryList.SelectedItem;
+                        _entryListSource.RemoveAt(idx);
+                        if(idx >= _entryListSource.Count)
+                            _entryList.SelectedItem = idx - 1;
+                        _entryList.SetNeedsDisplay();
 
-                        Application.MainLoop.Invoke(() => {
-                            MessageBox.Query("Deleted", "Object(s) deleted.", "Ok");
-                        });
-
-                        Ls();
+                        //Ls();
                     } catch(Exception ex) {
                         MessageBox.ErrorQuery(60, 10, "Error", ex.ToString(), "Ok");
                     }

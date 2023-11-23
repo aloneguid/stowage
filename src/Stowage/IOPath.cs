@@ -138,14 +138,14 @@ namespace Stowage {
         /// <summary>
         /// Gets parent path of this item.
         /// </summary>
-        public static string GetParent(string path) {
+        public static string? GetParent(string? path) {
             if(path == null)
                 return null;
 
             path = Normalize(path);
 
-            string[] parts = Split(path);
-            if(parts.Length == 0)
+            string[]? parts = Split(path);
+            if(parts == null || parts.Length == 0)
                 return null;
 
             return parts.Length > 1

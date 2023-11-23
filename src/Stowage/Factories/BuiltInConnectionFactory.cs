@@ -22,7 +22,7 @@ namespace Stowage.Factories {
                 connectionString.GetRequired(KnownParameter.AccountName, true, out string accountName);
                 connectionString.GetRequired(KnownParameter.BucketName, true, out string containerName);
 
-                string sharedKey = connectionString.Get(KnownParameter.KeyOrPassword);
+                string? sharedKey = connectionString.Get(KnownParameter.KeyOrPassword);
                 if(!string.IsNullOrEmpty(sharedKey)) {
                     return new AzureBlobFileStorage(accountName, containerName, new SharedKeyAuthHandler(accountName, sharedKey));
                 }
@@ -37,10 +37,10 @@ namespace Stowage.Factories {
 
             if(connectionString.Prefix == "s3") {
                 connectionString.GetRequired(KnownParameter.BucketName, true, out string bucketName);
-                connectionString.GetRequired(KnownParameter.Region, true, out string region);
+                string? region = connectionString.Get(KnownParameter.Region);
                 connectionString.GetRequired(KnownParameter.AwsProfile, true, out string profileName);
 
-                return Files.Of.AmazonS3(bucketName, region, profileName);
+                return Files.Of.AmazonS3FromCliProfile(bucketName, profileName, region);
             }
 
             return null;

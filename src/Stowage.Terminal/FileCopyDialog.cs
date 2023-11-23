@@ -150,6 +150,7 @@ namespace Stowage.Terminal {
                         MessageBox.Query(60, 5, "Done", "Files copied.", "Ok");
                         Application.RequestStop();
                     }
+                    _to.Ls(true);
                 });
             });
         }

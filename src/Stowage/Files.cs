@@ -153,13 +153,25 @@ namespace Stowage {
         /// Creates Amazon S3 provider using AWS CLI profile name. This also supports session tokens if they are present in the profile definition.
         /// </summary>
         /// <param name="_"></param>
-        /// <param name="bucketName"></param>
-        /// <param name="region"></param>
-        /// <param name="profileName"></param>
+        /// <param name="profileName">Profile name (required)</param>
         /// <returns></returns>
-        public static IFileStorage AmazonS3(this IFilesFactory _, string bucketName, string region, string profileName = "default") {
+        public static IFileStorage AmazonS3FromCliProfile(this IFilesFactory _,
+            string bucketName,
+            string profileName = CredentialFileParser.DefaultProfileName,
+            string? region = null) {
+            
             var parser = new CredentialFileParser();
-            parser.FillCredentials(profileName, out string? accessKeyId, out string? secretAccessKey, out string? sessionToken);
+            parser.FillCredentials(profileName,
+                out string accessKeyId, out string secretAccessKey,
+                out string? sessionToken,
+                out string? configRegion);
+
+            if(region == null)
+                region = configRegion;
+
+            if(region == null)
+                throw new InvalidOperationException("Region is required to be either passed explicitly or configured in AWS CLI config.");
+
             return AmazonS3(_, accessKeyId, secretAccessKey, region, new Uri($"https://{bucketName}.s3.amazonaws.com"), sessionToken);
         }
 

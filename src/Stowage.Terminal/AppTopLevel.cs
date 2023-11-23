@@ -43,7 +43,8 @@ namespace Stowage.Terminal {
                 }),
                 new StatusItem(Key.F5, "~F5~ Copy", CopyFiles),
                 new StatusItem(Key.R | Key.CtrlMask, "~Ctrl-R~ Rescan", () => {
-                    GetFocusedView().Ls();
+                    GetFocusedView().Ls(true);
+                    GetUnfocusedView().Ls(true);
                 }),
                 new StatusItem(Key.Delete, "~Del~ Delete", () => {
                     GetFocusedView().DeleteEntry();

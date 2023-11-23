@@ -5,15 +5,24 @@ using Terminal.Gui;
 namespace Stowage.Terminal {
     class IOEntryListDataSource : IListDataSource {
 
-        private readonly List<IOEntry> _entries;
+        private readonly List<IOEntry> _entries = new List<IOEntry>();
         public const int SizeColLength = 10;
         public const int ModColLength = 11;
 
-        public IOEntryListDataSource(IEnumerable<IOEntry> entries, bool isRoot) {
-            _entries = entries.OrderBy(e => e.Path.IsFolder ? 0 : 1).ThenBy(e => e.Name).ToList();
+        public IOEntryListDataSource() {
+
+        }
+
+        public void Rebind(IEnumerable<IOEntry> entries, bool isRoot) {
+            _entries.Clear();
+            _entries.AddRange(entries.OrderBy(e => e.Path.IsFolder ? 0 : 1).ThenBy(e => e.Name));
             if(!isRoot) {
                 _entries.Insert(0, new IOEntry("../"));
             }
+        }
+
+        public void RemoveAt(int idx) {
+            _entries.RemoveAt(idx);
         }
 
         public int Count => _entries.Count;

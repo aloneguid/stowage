@@ -94,10 +94,10 @@ namespace Stowage {
         /// </summary>
         /// <param name="parameterName"></param>
         /// <returns>Parameter value. If parameter is not set returns null.</returns>
-        public string Get(string parameterName) {
+        public string? Get(string parameterName) {
             if(parameterName == null)
                 return null;
-            if(!_parts.TryGetValue(parameterName, out string value))
+            if(!_parts.TryGetValue(parameterName, out string? value))
                 return null;
             return value;
         }
