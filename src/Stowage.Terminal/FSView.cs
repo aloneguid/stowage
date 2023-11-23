@@ -26,6 +26,11 @@ namespace Stowage.Terminal {
             _entryList.Y = 2;
             _entryList.Width = Dim.Fill();
             _entryList.Height = Dim.Fill() - 1;
+            //_entryList.AllowsMultipleSelection = true;
+            //_entryList.AllowsMarking = true;
+            // vim-style navigation
+            _entryList.AddKeyBinding(Key.j, Command.LineDown);
+            _entryList.AddKeyBinding(Key.k, Command.LineUp);
             Ls();
 
             Add(_pathLabel);

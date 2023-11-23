@@ -1,4 +1,8 @@
-﻿## 1.5.0
+﻿## 1.5.1
+
+Improvement: "Minio" factory method is missing region parameter by @zitmen in #20.
+
+## 1.5.0
 
 ### New features
 
