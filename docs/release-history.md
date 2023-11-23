@@ -4,6 +4,10 @@
 
 - AWS CLI configuration parser also picks up default region from `~/.aws/config` file.
 
+### Bugs fixed
+
+- AWS `Rm` on folders was not deleting recursively.
+
 ## 1.5.1
 
 Improvement: "Minio" factory method is missing region parameter by @zitmen in #20.

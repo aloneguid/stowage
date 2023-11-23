@@ -286,7 +286,7 @@ namespace Stowage.Impl.Microsoft {
             if(recurse) {
                 await RmRecurseWithLs(path, cancellationToken);
             } else {
-                https://docs.microsoft.com/en-us/rest/api/storageservices/delete-blob
+                // https://docs.microsoft.com/en-us/rest/api/storageservices/delete-blob
                 HttpResponseMessage response = await SendAsync(new HttpRequestMessage(HttpMethod.Delete, $"{_containerName}{path}"));
                 if(response.StatusCode != HttpStatusCode.NotFound) {
                     response.EnsureSuccessStatusCode();

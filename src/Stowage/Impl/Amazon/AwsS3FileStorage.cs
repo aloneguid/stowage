@@ -69,16 +69,22 @@ namespace Stowage.Impl.Amazon {
             return result;
         }
 
-        public override async Task Rm(IOPath? relPath, bool recurse, CancellationToken cancellationToken = default) {
-            if(relPath is null)
-                throw new ArgumentNullException(nameof(relPath));
+        public override async Task Rm(IOPath? path, bool recurse, CancellationToken cancellationToken = default) {
+            if(path is null)
+                throw new ArgumentNullException(nameof(path));
 
-            IOPath path = GetFullPath(relPath);
+            if(recurse) {
+                await RmRecurseWithLs(path, cancellationToken);
+            } else {
 
-            // call https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
-            (await SendAsync(
-               new HttpRequestMessage(HttpMethod.Delete, path.NLS)))
-               .EnsureSuccessStatusCode();
+                IOPath? fullPath = GetFullPath(path);
+                if(fullPath != null) {
+                    // call https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
+                    (await SendAsync(
+                       new HttpRequestMessage(HttpMethod.Delete, fullPath.NLS)))
+                       .EnsureSuccessStatusCode();
+                }
+            }
         }
 
         public override void Dispose() {
