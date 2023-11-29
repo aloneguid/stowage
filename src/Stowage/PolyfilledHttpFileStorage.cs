@@ -8,26 +8,25 @@ namespace Stowage {
     abstract class PolyfilledHttpFileStorage : PolyfilledFileStorage {
         private readonly HttpClient _http;
 
-        protected PolyfilledHttpFileStorage(Uri baseAddress, DelegatingHandler authHandler) {
-            if(baseAddress is null)
-                throw new ArgumentNullException(nameof(baseAddress));
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="baseAddress">If you pass null, full URL will need to be specified when sending requests</param>
+        /// <param name="authHandler"></param>
+        protected PolyfilledHttpFileStorage(Uri? baseAddress, DelegatingHandler authHandler) {
             _http = new HttpClient(authHandler) {
                 BaseAddress = baseAddress,
                 DefaultRequestHeaders = {
-               {
-                  "User-Agent",
-                  Constants.UserAgent
-               }
-            }
+                    { "User-Agent", Constants.UserAgent }
+                }
             };
         }
 
-        protected Task<HttpResponseMessage> SendAsync(HttpRequestMessage request) {
+        protected virtual Task<HttpResponseMessage> SendAsync(HttpRequestMessage request) {
             return _http.SendAsync(request);
         }
 
-        protected HttpResponseMessage Send(HttpRequestMessage request) {
+        protected virtual HttpResponseMessage Send(HttpRequestMessage request) {
 #if NET5_0_OR_GREATER
             return _http.Send(request);
 #else
@@ -57,7 +56,7 @@ namespace Stowage {
             }
 
             string jsonString = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<T>(jsonString);
+            return JsonSerializer.Deserialize<T>(jsonString)!;
         }
 
         protected async Task<T> GetAsync<T>(HttpRequestMessage request, bool throwOnError = true) {

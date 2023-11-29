@@ -93,11 +93,9 @@ namespace Stowage.Impl.Amazon {
             return result;
         }
 
-        public string ParseInitiateMultipartUploadResponse(string xml) {
+        public string? ParseInitiateMultipartUploadResponse(string xml) {
             using(var sr = new StringReader(xml)) {
                 using(var xr = XmlReader.Create(sr)) {
-                    string en = null;
-
                     while(xr.Read()) {
                         if(xr.NodeType == XmlNodeType.Element && xr.Name == "UploadId") {
                             xr.Read();
@@ -108,6 +106,53 @@ namespace Stowage.Impl.Amazon {
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Parses out XML response. See specs at https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html
+        /// </summary>
+        /// <param name="xml"></param>
+        public List<Bucket> ParseListBucketsResponse(string xml) {
+            var result = new List<Bucket>();
+            using(var sr = new StringReader(xml)) {
+                using(var xr = XmlReader.Create(sr)) {
+                    string? en = null;
+                    while(xr.Read()) {
+                        if(xr.NodeType == XmlNodeType.Element) {
+                            switch(xr.Name) {
+                                case "Bucket":
+                                    string? name = null;
+                                    DateTimeOffset? creationDate = null;
+
+                                    while(xr.Read() && !(xr.NodeType == XmlNodeType.EndElement && xr.Name == "Bucket")) {
+                                        if(xr.NodeType == XmlNodeType.Element)
+                                            en = xr.Name;
+                                        else if(xr.NodeType == XmlNodeType.Text) {
+                                            switch(en) {
+                                                case "Name":
+                                                    name = xr.Value;
+                                                    break;
+                                                case "CreationDate":
+                                                    creationDate = DateTimeOffset.Parse(xr.Value);
+                                                    break;
+                                            }
+                                        }
+                                    }
+
+                                    if(name != null) {
+                                        result.Add(new Bucket {
+                                            Name = name,
+                                            CreationDate = creationDate
+                                        });
+                                    }
+
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
         }
     }
 }

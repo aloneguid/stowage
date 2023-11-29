@@ -1,9 +1,8 @@
 ﻿name: build
 
 env:
-  v: '1.5.1'
-  av: '1.0.0'
-  swtv: '0.0.1'
+  v: '2.0.0'
+  av: '2.0.0'
 
 on:
   push:

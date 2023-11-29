@@ -19,12 +19,13 @@ namespace Stowage.Impl.Amazon {
     /// explore python version: https://github.com/tedder/requests-aws4auth
     /// </summary>
     class S3AuthHandler : DelegatingHandler {
+        private const string ListBucketsRegion = "us-east-1";
         private readonly string _accessKeyId;
         private readonly string _secretAccessKey;
         private readonly string? _sessionToken;
         private readonly string _region;
         private readonly string _service;
-        private static readonly string EmptySha256 = new byte[0].SHA256().ToHexString();
+        private static readonly string EmptySha256 = new byte[0].SHA256()!.ToHexString()!;
 
         public S3AuthHandler(string accessKeyId, string secretAccessKey, string? sessionToken, string region, string service = "s3") : base(new HttpClientHandler()) {
             _accessKeyId = accessKeyId;
@@ -48,6 +49,10 @@ namespace Stowage.Impl.Amazon {
 
         protected async Task<string> SignAsync(HttpRequestMessage request, DateTimeOffset? signDate = null) {
             // a very helpful article on S3 auth: https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+
+            // for some reason, the ListBuckets request needs to be signed with a different region,
+            // regardless where the bucket is located.
+            string region = request.RequestUri!.AbsoluteUri == "https://s3.amazonaws.com/" ? ListBucketsRegion : _region;
 
             DateTimeOffset dateToUse = signDate ?? DateTimeOffset.UtcNow;
             string nowDate = dateToUse.ToString("yyyyMMdd");
@@ -97,7 +102,7 @@ namespace Stowage.Impl.Amazon {
 
             string stringToSign = "AWS4-HMAC-SHA256\n" +
                   amzNowDate + "\n" +
-                  nowDate + "/" + _region + "/s3/aws4_request\n" +
+                  nowDate + "/" + region + "/s3/aws4_request\n" +
                   canonicalRequest.SHA256();
 
 
@@ -112,7 +117,7 @@ namespace Stowage.Impl.Amazon {
 
             byte[] kSecret = Encoding.UTF8.GetBytes(("AWS4" + _secretAccessKey).ToCharArray());
             byte[] kDate = HmacSha256(nowDate, kSecret);
-            byte[] kRegion = HmacSha256(_region, kDate);
+            byte[] kRegion = HmacSha256(region, kDate);
             byte[] kService = HmacSha256(_service, kRegion);
             byte[] kSigning = HmacSha256("aws4_request", kService);
 
@@ -120,7 +125,7 @@ namespace Stowage.Impl.Amazon {
             byte[] signatureRaw = HmacSha256(stringToSign, kSigning);
             string signature = signatureRaw.ToHexString();
 
-            string auth = $"Credential={_accessKeyId}/{nowDate}/{_region}/s3/aws4_request,SignedHeaders={signedHeaders},Signature={signature}";
+            string auth = $"Credential={_accessKeyId}/{nowDate}/{region}/s3/aws4_request,SignedHeaders={signedHeaders},Signature={signature}";
             request.Headers.Authorization = new AuthenticationHeaderValue("AWS4-HMAC-SHA256", auth);
 
             return signature;

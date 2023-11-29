@@ -12,7 +12,7 @@ namespace Stowage {
         /// <summary>
         /// Entry Path
         /// </summary>
-        public IOPath Path { get; private set; }
+        public IOPath Path { get; internal set; }
 
         /// <summary>
         /// Gets the name of this blob, unique within the folder. In most providers this is the same as file name.

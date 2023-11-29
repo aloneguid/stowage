@@ -101,5 +101,16 @@ namespace Stowage.Test {
         public void NLWTS_theory(string input, string expected) {
             Assert.Equal(expected, new IOPath(input).NLWTS);
         }
+
+        [Theory]
+        [InlineData("/", "/", "/")]
+        [InlineData("/one/two", "one", "/two")]
+        [InlineData("/one/two/", "one", "/two/")]
+        [InlineData("/one/", "one", "/")]
+        public void ExtractPrefixAndRelativePath_Theory(string input, string expectedPrefix, string expectedRelativePath) {
+            new IOPath(input).ExtractPrefixAndRelativePath(out string prefix, out IOPath relativePath);
+            Assert.Equal(expectedPrefix, prefix);
+            Assert.Equal(expectedRelativePath, relativePath.Full);
+        }
     }
 }

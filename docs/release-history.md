@@ -1,8 +1,23 @@
-﻿## 1.6.0
+﻿## 2.0.0
+
+### New features
+
+#### Breaking change for AWS S3 users
+
+Factory methods for S3 do not have bucket name anymore. Instead, you need to pass bucket name as a part of the file path.
+
+Before v2: `/directory/object`.
+
+Since v2: `/bucket/directory/object`.
+
+This syntax makes accessing multiple buckets more ergonomic. In addition to that, `Ls` operation on root folder simply returns the list of buckets.
+
+#### Other new features
 
 ### Improvements
 
 - AWS CLI configuration parser also picks up default region from `~/.aws/config` file.
+- S3 error messages are improved, taking response message from http api response.
 
 ### Bugs fixed
 

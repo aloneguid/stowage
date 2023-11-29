@@ -1,24 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
-     <AssemblyOriginatorKeyFile>../fake.snk</AssemblyOriginatorKeyFile>
-    <IsPackable>false</IsPackable>
-    <SignAssembly>True</SignAssembly>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+        <AssemblyOriginatorKeyFile>../fake.snk</AssemblyOriginatorKeyFile>
+        <IsPackable>false</IsPackable>
+        <SignAssembly>True</SignAssembly>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Config.Net" Version="4.19.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
-    <PackageReference Include="xunit" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Config.Net" Version="4.19.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+        <PackageReference Include="xunit" Version="2.4.1" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Stowage\Stowage.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Stowage\Stowage.csproj" />
+    </ItemGroup>
 
 </Project>

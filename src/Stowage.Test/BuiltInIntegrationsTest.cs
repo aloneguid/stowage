@@ -10,17 +10,10 @@ using System.Reflection;
 
 namespace Stowage.Test.Integration {
     public class StorageTestDataAttribute : DataAttribute {
-        private readonly string _pathPrefix;
-        private readonly IFileStorage _storage;
 
-        public StorageTestDataAttribute(string pathPrefix = null) {
-            _pathPrefix = pathPrefix;
-        }
-
-        private IFileStorage CreateStorage(string name) {
-            ITestSettings settings = new ConfigurationBuilder<ITestSettings>()
-               .UseIniFile("c:\\tmp\\integration-tests.ini")
-               .Build();
+        private IFileStorage CreateStorage(string name, out string? pathPrefix) {
+            ITestSettings settings = ConfigLoader.Load();
+            pathPrefix = null;
 
             IFileStorage storage;
 
@@ -32,7 +25,8 @@ namespace Stowage.Test.Integration {
                 //   storage = Files.Of.AzureTableStorage(settings.AzureStorageAccount, settings.AzureStorageKey);
                 //   break;
                 case "S3":
-                    storage = Files.Of.AmazonS3(settings.AwsBucket, settings.AwsKey, settings.AwsSecret, settings.AwsRegion);
+                    storage = Files.Of.AmazonS3(settings.AwsKey, settings.AwsSecret, settings.AwsRegion);
+                    pathPrefix = "/" + settings.AwsBucket;
                     break;
                 case "Minio":
                     storage = Files.Of.Minio(settings.MinioEndpoint, "stowage", settings.MinioKey, settings.MinioSecret);
@@ -53,6 +47,7 @@ namespace Stowage.Test.Integration {
                     break;
                 case "DBFS":
                     storage = Files.Of.DatabricksDbfs(settings.DatabricksBaseUri, settings.DatabricksToken);
+                    pathPrefix = "/FileStore/itest";
                     break;
 
                 default:
@@ -63,7 +58,7 @@ namespace Stowage.Test.Integration {
         }
 
         public override IEnumerable<object[]> GetData(MethodInfo testMethod) {
-            return FilesSelfTest.GetXUnitTestData(CreateStorage(testMethod.Name), _pathPrefix);
+            return FilesSelfTest.GetXUnitTestData(CreateStorage(testMethod.Name, out string? pathPrefix), pathPrefix);
         }
     }
 
@@ -129,7 +124,7 @@ namespace Stowage.Test.Integration {
     [Trait("Category", "Integration")]
     public class DBFSIntegrationTest : BuiltInIntegrationsTest {
         [Theory]
-        [StorageTestData("/FileStore/itest")]
+        [StorageTestData]
         public Task DBFS(string n, Func<Task> testMethod) {
             return testMethod();
         }
@@ -139,9 +134,7 @@ namespace Stowage.Test.Integration {
         protected readonly ITestSettings settings;
 
         public BuiltInIntegrationsTest() {
-            settings = new ConfigurationBuilder<ITestSettings>()
-               .UseIniFile("c:\\tmp\\integration-tests.ini")
-               .Build();
+            settings = ConfigLoader.Load();
         }
     }
 }

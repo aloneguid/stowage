@@ -4,29 +4,54 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Numerics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Stowage.Impl.Amazon {
-    sealed class AwsS3FileStorage : PolyfilledHttpFileStorage {
+    sealed class AwsS3FileStorage : PolyfilledHttpFileStorage, IAwsS3FileStorage {
         private readonly XmlResponseParser _xmlParser = new XmlResponseParser();
-        private readonly IOPath? _prefix;
+        private readonly Uri _endpoint;
+        private readonly BucketAddressingStyle _addressingStyle;
 
-        public AwsS3FileStorage(Uri endpoint, DelegatingHandler authHandler, IOPath? prefix = null) :
-           base(endpoint, authHandler) {
-            _prefix = prefix;
+        public AwsS3FileStorage(
+            Uri endpoint,
+            DelegatingHandler authHandler,
+            BucketAddressingStyle addressingStyle = BucketAddressingStyle.VirtualHost) :
+           base(null, authHandler) {
+            _endpoint = endpoint;
+            _addressingStyle = addressingStyle;
         }
 
-        private IOPath? GetFullPath(IOPath? path) {
-            if(path == null)
-                return null;
-            return _prefix == null ? path : path.Prefix(_prefix);
+        private string MakeUrl(string? bucketName, string pathAndQuery) {
+            Uri uri;
+            if(_addressingStyle == BucketAddressingStyle.VirtualHost) {
+                string bucketPart = bucketName == null ? "" : bucketName + ".";
+                uri = new Uri($"{_endpoint.Scheme}://{bucketPart}{_endpoint.Authority}");
+            } else {
+                uri = new Uri($"{_endpoint.Scheme}://{_endpoint.Authority}/{bucketName}");
+            }
+            return new Uri(uri, pathAndQuery).ToString();
         }
 
-        public override async Task<IReadOnlyCollection<IOEntry>> Ls(IOPath relPath, bool recurse = false, CancellationToken cancellationToken = default) {
+        public override async Task<IReadOnlyCollection<IOEntry>> Ls(IOPath? path, bool recurse = false, CancellationToken cancellationToken = default) {
+            if(path != null && !path.IsFolder)
+                throw new ArgumentException("path needs to be a folder", nameof(path));
 
-            IOPath? path = GetFullPath(relPath);
+            // listing root folder is a special case - list buckets
+            if(path == null || path.IsRootPath) {
+                IReadOnlyCollection<Bucket> buckets = await ListBuckets(cancellationToken);
+                return buckets.Select(b => new IOEntry(b.Name + "/") {
+                    CreatedTime = b.CreationDate
+                }).ToList();
+            }
+
+            path.ExtractPrefixAndRelativePath(out string bucketName, out IOPath relativePath);
+            return await LsInsideBucket(bucketName, relativePath, recurse, cancellationToken);
+        }
+
+        private async Task<IReadOnlyCollection<IOEntry>> LsInsideBucket(string bucketName, IOPath path, bool recurse = false, CancellationToken cancellationToken = default) {
 
             if(path != null && !path.IsFolder)
                 throw new ArgumentException("path needs to be a folder", nameof(path));
@@ -53,7 +78,9 @@ namespace Stowage.Impl.Amazon {
                     uri += "&continuation-token=" + AWSSDKUtils.UrlEncode(continuationToken, false);
                 }
 
-                HttpResponseMessage response = await SendAsync(new HttpRequestMessage(HttpMethod.Get, uri));
+                HttpResponseMessage response = await SendAsync(
+                    new HttpRequestMessage(HttpMethod.Get, MakeUrl(bucketName, uri)),
+                    true);
                 response.EnsureSuccessStatusCode();
                 string xml = await response.Content.ReadAsStringAsync();
 
@@ -66,7 +93,18 @@ namespace Stowage.Impl.Amazon {
                 Implicits.AssumeImplicitFolders(path, result);
             }
 
+            // return with prepended bucket name
+            PrependBucketName(result, bucketName);
             return result;
+        }
+
+        private async Task<IReadOnlyCollection<Bucket>> ListBuckets(CancellationToken cancellationToken = default) {
+            // list buckets operation: https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html
+            HttpResponseMessage response = await SendAsync(
+                new HttpRequestMessage(HttpMethod.Get, MakeUrl(null, "/")), true);
+            string xml = await response.Content.ReadAsStringAsync();
+
+            return _xmlParser.ParseListBucketsResponse(xml);
         }
 
         public override async Task Rm(IOPath? path, bool recurse, CancellationToken cancellationToken = default) {
@@ -77,12 +115,12 @@ namespace Stowage.Impl.Amazon {
                 await RmRecurseWithLs(path, cancellationToken);
             } else {
 
-                IOPath? fullPath = GetFullPath(path);
-                if(fullPath != null) {
+                if(path != null) {
                     // call https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
-                    (await SendAsync(
-                       new HttpRequestMessage(HttpMethod.Delete, fullPath.NLS)))
-                       .EnsureSuccessStatusCode();
+                    path.ExtractPrefixAndRelativePath(out string bucketName, out IOPath relativePath);
+                    await SendAsync(
+                       new HttpRequestMessage(HttpMethod.Delete, MakeUrl(bucketName, relativePath.NLS)),
+                       true);
                 }
             }
         }
@@ -91,62 +129,76 @@ namespace Stowage.Impl.Amazon {
 
         }
 
-        public override async Task<Stream?> OpenRead(IOPath relPath, CancellationToken cancellationToken = default) {
-            if(relPath is null)
-                throw new ArgumentNullException(nameof(relPath));
+        public override async Task<Stream?> OpenRead(IOPath path, CancellationToken cancellationToken = default) {
+            if(path is null)
+                throw new ArgumentNullException(nameof(path));
 
-            IOPath? path = GetFullPath(relPath);
+            path.ExtractPrefixAndRelativePath(out string bucketName, out IOPath relativePath);
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                MakeUrl(bucketName, $"{IOPath.Normalize(relativePath, true)}"));
 
             // call https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
-            HttpResponseMessage response = await SendAsync(new HttpRequestMessage(HttpMethod.Get, $"{IOPath.Normalize(path, true)}"));
+            HttpResponseMessage response = await SendAsync(request);
 
             if(response.StatusCode == HttpStatusCode.NotFound)
                 return null;
 
-            response.EnsureSuccessStatusCode();
+            if(!response.IsSuccessStatusCode)
+                await ThrowFromResponse(response);
 
             return await response.Content.ReadAsStreamAsync();
         }
 
-        public override async Task<Stream> OpenWrite(IOPath? relPath, CancellationToken cancellationToken = default) {
-            if(relPath is null)
-                throw new ArgumentNullException(nameof(relPath));
+        public override async Task<Stream> OpenWrite(IOPath? path, CancellationToken cancellationToken = default) {
+            if(path is null)
+                throw new ArgumentNullException(nameof(path));
 
-            IOPath? path = GetFullPath(relPath);
-            string npath = IOPath.Normalize(path, true);
+            path.ExtractPrefixAndRelativePath(out string bucketName, out IOPath relativePath);
+
+            string npath = IOPath.Normalize(relativePath, true);
 
             // initiate upload and get upload ID
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{npath}?uploads");
-            HttpResponseMessage response = await SendAsync(request);
-            response.EnsureSuccessStatusCode();
+            var request = new HttpRequestMessage(
+                HttpMethod.Post, 
+                MakeUrl(bucketName, $"{npath}?uploads"));
+            HttpResponseMessage response = await SendAsync(request, true);
             string xml = await response.Content.ReadAsStringAsync(); // this contains UploadId
-            string uploadId = _xmlParser.ParseInitiateMultipartUploadResponse(xml);
+            string? uploadId = _xmlParser.ParseInitiateMultipartUploadResponse(xml);
+            if(uploadId == null)
+                throw new InvalidOperationException("UploadId not found in response");  
 
-            return new AwsWriteStream(this, npath, uploadId);
+            return new AwsWriteStream(this, bucketName, npath, uploadId);
         }
 
         // https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
-        private HttpRequestMessage CreateUploadPartRequest(string key, string uploadId, int partNumber, byte[] buffer, int count) {
-            var request = new HttpRequestMessage(HttpMethod.Put, $"{key}?partNumber={partNumber}&uploadId={uploadId}");
+        private HttpRequestMessage CreateUploadPartRequest(string bucketName, string key, string uploadId, int partNumber, byte[] buffer, int count) {
+            var request = new HttpRequestMessage(
+                HttpMethod.Put,
+                MakeUrl(bucketName,
+                $"{key}?partNumber={partNumber}&uploadId={uploadId}"));
             request.Content = new ByteArrayContent(buffer, 0, count);
             return request;
         }
 
-        public string UploadPart(string key, string uploadId, int partNumber, byte[] buffer, int count) {
-            HttpResponseMessage response = Send(CreateUploadPartRequest(key, uploadId, partNumber, buffer, count));
+        public string UploadPart(string bucketName, string key, string uploadId, int partNumber, byte[] buffer, int count) {
+            HttpResponseMessage response = Send(CreateUploadPartRequest(bucketName, key, uploadId, partNumber, buffer, count));
             response.EnsureSuccessStatusCode();
             return response.Headers.GetValues("ETag").First();
         }
 
-        public async Task<string> UploadPartAsync(string key, string uploadId, int partNumber, byte[] buffer, int count) {
-            HttpResponseMessage response = await SendAsync(CreateUploadPartRequest(key, uploadId, partNumber, buffer, count));
+        public async Task<string> UploadPartAsync(string bucketName, string key, string uploadId, int partNumber, byte[] buffer, int count) {
+            HttpResponseMessage response = await SendAsync(CreateUploadPartRequest(bucketName, key, uploadId, partNumber, buffer, count));
             response.EnsureSuccessStatusCode();
             return response.Headers.GetValues("ETag").First();
         }
 
         //https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html
-        private HttpRequestMessage CreateCompleteMultipartUploadRequest(string key, string uploadId, IEnumerable<string> partTags) {
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{key}?uploadId={uploadId}");
+        private HttpRequestMessage CreateCompleteMultipartUploadRequest(string bucketName, string key, string uploadId, IEnumerable<string> partTags) {
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                MakeUrl(bucketName, $"{key}?uploadId={uploadId}"));
 
             var sb = new StringBuilder(@"<?xml version=""1.0"" encoding=""UTF-8""?><CompleteMultipartUpload xmlns=""http://s3.amazonaws.com/doc/2006-03-01/"">");
             int partId = 1;
@@ -164,12 +216,52 @@ namespace Stowage.Impl.Amazon {
             return request;
         }
 
-        public void CompleteMultipartUpload(string key, string uploadId, IEnumerable<string> partTags) {
-            Send(CreateCompleteMultipartUploadRequest(key, uploadId, partTags)).EnsureSuccessStatusCode();
+        public void CompleteMultipartUpload(string bucketName, string key, string uploadId, IEnumerable<string> partTags) {
+            Send(CreateCompleteMultipartUploadRequest(bucketName, key, uploadId, partTags), true);
         }
 
-        public async Task CompleteMultipartUploadAsync(string key, string uploadId, IEnumerable<string> partTags) {
-            (await SendAsync(CreateCompleteMultipartUploadRequest(key, uploadId, partTags))).EnsureSuccessStatusCode();
+        public async Task CompleteMultipartUploadAsync(string bucketName, string key, string uploadId, IEnumerable<string> partTags) {
+            await SendAsync(CreateCompleteMultipartUploadRequest(bucketName, key, uploadId, partTags), true);
         }
+
+        private static void PrependBucketName(IReadOnlyCollection<IOEntry> entries, string bucketName) {
+            foreach(IOEntry entry in entries) {
+                entry.Path = entry.Path.Prefix(bucketName)!;
+            }
+        }   
+
+        #region [ AWS Specific error handling ]
+
+        private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, bool expectSuccess) {
+            HttpResponseMessage response = await base.SendAsync(request);
+            if (expectSuccess) {
+                if(!response.IsSuccessStatusCode) {
+                    await ThrowFromResponse(response);
+                }
+            }
+            return response;
+        }
+
+        private async Task ThrowFromResponse(HttpResponseMessage response) {
+            string errorDocument = await response.Content.ReadAsStringAsync();
+            // todo: this document can be parsed for more details later
+            throw new Exception($"request failed with code {(int)response.StatusCode} ({response.StatusCode}): {errorDocument}");
+
+        }
+
+        private HttpResponseMessage Send(HttpRequestMessage request, bool expectSuccess) {
+            HttpResponseMessage response = base.Send(request);
+            if(expectSuccess) {
+                if(!response.IsSuccessStatusCode) {
+                    string errorDocument = response.Content.ReadAsStringAsync().Result;
+                    // todo: this document can be parsed for more details later
+                    throw new Exception($"request failed with code {(int)response.StatusCode} ({response.StatusCode}): {errorDocument}");
+                }
+            }
+            return response;
+        }
+
+
+        #endregion
     }
 }

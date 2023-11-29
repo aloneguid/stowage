@@ -16,9 +16,7 @@ namespace Stowage.Test.Impl
 
       public DatabricksTest()
       {
-         ITestSettings settings = new ConfigurationBuilder<ITestSettings>()
-            .UseIniFile("c:\\tmp\\integration-tests.ini")
-            .Build();
+         ITestSettings settings = ConfigLoader.Load();
 
          dbc = (IDatabricksClient)Files.Of.DatabricksDbfs(settings.DatabricksBaseUri, settings.DatabricksToken);
 

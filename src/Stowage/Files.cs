@@ -119,16 +119,15 @@ namespace Stowage {
         /// Creates Amazon S3 provider
         /// </summary>
         /// <param name="_"></param>
-        /// <param name="bucketName"></param>
         /// <param name="accessKeyId"></param>
         /// <param name="secretAccessKey"></param>
         /// <param name="region"></param>
         /// <param name="sessionToken">Optional session token</param>
         /// <returns></returns>
-        public static IFileStorage AmazonS3(this IFilesFactory _,
-            string bucketName, string accessKeyId, string secretAccessKey, string region, string? sessionToken = null) {
+        public static IAwsS3FileStorage AmazonS3(this IFilesFactory _,
+            string accessKeyId, string secretAccessKey, string region, string? sessionToken = null) {
             return AmazonS3(_, accessKeyId, secretAccessKey, region, 
-                new Uri($"https://{bucketName}.s3.amazonaws.com"),
+                new Uri($"https://s3.amazonaws.com"),
                 sessionToken);
         }
 
@@ -141,12 +140,16 @@ namespace Stowage {
         /// <param name="region"></param>
         /// <param name="endpoint"></param>
         /// <param name="sessionToken">Optional session token</param>
+        /// <param name="bucketAddressingStyle"></param>
         /// <returns></returns>
-        public static IFileStorage AmazonS3(this IFilesFactory _,
-            string accessKeyId, string secretAccessKey, string region, Uri endpoint, string? sessionToken = null) {
+        public static IAwsS3FileStorage AmazonS3(this IFilesFactory _,
+            string accessKeyId, string secretAccessKey, string region, Uri endpoint,
+            string? sessionToken = null,
+            BucketAddressingStyle bucketAddressingStyle = BucketAddressingStyle.VirtualHost) {
             return new AwsS3FileStorage(
                endpoint,
-               new S3AuthHandler(accessKeyId, secretAccessKey, sessionToken, region));
+               new S3AuthHandler(accessKeyId, secretAccessKey, sessionToken, region),
+               bucketAddressingStyle);
         }
 
         /// <summary>
@@ -154,9 +157,9 @@ namespace Stowage {
         /// </summary>
         /// <param name="_"></param>
         /// <param name="profileName">Profile name (required)</param>
+        /// <param name="region"></param>
         /// <returns></returns>
-        public static IFileStorage AmazonS3FromCliProfile(this IFilesFactory _,
-            string bucketName,
+        public static IAwsS3FileStorage AmazonS3FromCliProfile(this IFilesFactory _,
             string profileName = CredentialFileParser.DefaultProfileName,
             string? region = null) {
             
@@ -172,7 +175,7 @@ namespace Stowage {
             if(region == null)
                 throw new InvalidOperationException("Region is required to be either passed explicitly or configured in AWS CLI config.");
 
-            return AmazonS3(_, accessKeyId, secretAccessKey, region, new Uri($"https://{bucketName}.s3.amazonaws.com"), sessionToken);
+            return AmazonS3(_, accessKeyId, secretAccessKey, region, new Uri("https://s3.amazonaws.com"), sessionToken);
         }
 
         /// <summary>
@@ -185,7 +188,7 @@ namespace Stowage {
         /// <param name="accessKeyId">Access key you can get from Minio's console "Access keys" tab.</param>
         /// <param name="secretAccessKey">Secret key for the access key above</param>
         /// <returns></returns>
-        public static IFileStorage Minio(this IFilesFactory _,
+        public static IAwsS3FileStorage Minio(this IFilesFactory _,
             Uri endpoint,
             string bucketName,
             string accessKeyId,

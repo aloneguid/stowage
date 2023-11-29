@@ -36,11 +36,10 @@ namespace Stowage.Factories {
             }
 
             if(connectionString.Prefix == "s3") {
-                connectionString.GetRequired(KnownParameter.BucketName, true, out string bucketName);
-                string? region = connectionString.Get(KnownParameter.Region);
                 connectionString.GetRequired(KnownParameter.AwsProfile, true, out string profileName);
+                string? region = connectionString.Get(KnownParameter.Region);
 
-                return Files.Of.AmazonS3FromCliProfile(bucketName, profileName, region);
+                return Files.Of.AmazonS3FromCliProfile(profileName, region);
             }
 
             return null;

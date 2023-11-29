@@ -2,6 +2,7 @@
 
 namespace Stowage.Test {
     public interface ITestSettings {
+
         string AzureStorageAccount { get; }
 
         string AzureStorageKey { get; }

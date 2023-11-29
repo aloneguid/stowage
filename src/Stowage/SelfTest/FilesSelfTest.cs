@@ -14,7 +14,7 @@ namespace Stowage.SelfTest {
     public class FilesSelfTest {
         private readonly IFileStorage _storage;
         private readonly bool _failOnFirstTest;
-        private readonly string _pathPrefix;
+        private readonly string? _pathPrefix;
         private readonly List<TestOutcome> _outcomes = new List<TestOutcome>();
         private readonly List<Tuple<string, Func<Task>>> _testMethods;
 
@@ -22,7 +22,7 @@ namespace Stowage.SelfTest {
 
         }
 
-        private FilesSelfTest(IFileStorage storage, bool failOnFirstTest = false, string pathPrefix = null) {
+        private FilesSelfTest(IFileStorage storage, bool failOnFirstTest = false, string? pathPrefix = null) {
             _storage = storage;
             _failOnFirstTest = failOnFirstTest;
             _pathPrefix = pathPrefix;
@@ -113,11 +113,11 @@ namespace Stowage.SelfTest {
             }
         }
 
-        public static Task ExecuteAsync(IFileStorage storage, string pathPrefix = null) {
+        public static Task ExecuteAsync(IFileStorage storage, string? pathPrefix = null) {
             return new FilesSelfTest(storage, true, pathPrefix).ExecuteAsync();
         }
 
-        public static IEnumerable<object[]> GetXUnitTestData(IFileStorage storage, string pathPrefix = null) {
+        public static IEnumerable<object[]> GetXUnitTestData(IFileStorage storage, string? pathPrefix = null) {
             return new FilesSelfTest(storage, false, pathPrefix).GetXUnitTestData();
         }
 
@@ -129,23 +129,22 @@ namespace Stowage.SelfTest {
             throw ae;
         }
 
-        private string RandomBlobPath(string prefix = null, string subfolder = null, string extension = "") {
-            return IOPath.Combine(
+        private string RandomBlobPath(string? filenamePrefix = null, string? subfolder = null, string extension = "") {
+            string id = IOPath.Combine(
                subfolder,
-               (prefix ?? "") + Guid.NewGuid().ToString() + extension);
-        }
-
-        private async Task<string> GetRandomStreamIdAsync(string prefix = null) {
-            string id = RandomBlobPath();
-
-            if(prefix != null)
-                id = IOPath.Combine(prefix, id);
+               (filenamePrefix ?? "") + Guid.NewGuid().ToString() + extension);
 
             if(_pathPrefix != null)
                 id = IOPath.Combine(_pathPrefix, id);
 
+            return id;
+        }
+
+        private async Task<string> GetRandomStreamIdAsync(string? filenamePrefix = null, string? subfolder = null) {
+            string id = RandomBlobPath(filenamePrefix, subfolder);
+
             using Stream ws = await _storage.OpenWrite(id);
-            using Stream s = "kjhlkhlkhlkhlkh".ToMemoryStream();
+            using Stream s = "kjhlkhlkhlkhlkh".ToMemoryStream()!;
 
             s.CopyTo(ws);
 
@@ -184,8 +183,8 @@ namespace Stowage.SelfTest {
         private async Task Ls_WriteTwoFiles_TwoFilesMore() {
             int preCount = (await _storage.Ls(_pathPrefix)).Count;
 
-            await GetRandomStreamIdAsync();
-            await GetRandomStreamIdAsync();
+            string id1 = await GetRandomStreamIdAsync();
+            string id2 = await GetRandomStreamIdAsync();
 
             IReadOnlyCollection<IOEntry> entries = await _storage.Ls(_pathPrefix);
             int postCount = entries.Count;
@@ -199,7 +198,7 @@ namespace Stowage.SelfTest {
             int preCount = (await _storage.Ls(_pathPrefix, recurse: true)).Count;
 
             string folderName = Guid.NewGuid().ToString();
-            string f1 = await GetRandomStreamIdAsync(folderName);
+            string f1 = await GetRandomStreamIdAsync(subfolder: folderName);
 
             IReadOnlyCollection<string> postList = (await _storage.Ls(_pathPrefix, recurse: true)).Select(e => e.Path.Full).ToList();
             int postCount = postList.Count;
@@ -219,7 +218,7 @@ namespace Stowage.SelfTest {
             int preCount = (await _storage.Ls(_pathPrefix, recurse: false)).Count;
 
             string folderName = Guid.NewGuid().ToString();
-            string f1 = await GetRandomStreamIdAsync(folderName);
+            string f1 = await GetRandomStreamIdAsync(null, folderName);
 
             IReadOnlyCollection<string> postList = (await _storage.Ls(_pathPrefix, recurse: false)).Select(e => e.Path.Full).ToList();
             int postCount = postList.Count;
@@ -238,7 +237,7 @@ namespace Stowage.SelfTest {
         private async Task Ls_Recursive_Recurses() {
             string f1 = await GetRandomStreamIdAsync(Guid.NewGuid().ToString());
 
-            IReadOnlyCollection<string> entries = (await _storage.Ls(IOPath.RootFolderPath, recurse: true)).Select(e => e.Path.Full).ToList();
+            IReadOnlyCollection<string> entries = (await _storage.Ls(_pathPrefix ?? IOPath.RootFolderPath, recurse: true)).Select(e => e.Path.Full).ToList();
 
             bool contains = entries.Contains(f1);
 
@@ -251,7 +250,7 @@ namespace Stowage.SelfTest {
             int preCount = (await _storage.Ls(_pathPrefix)).Count;
 
             string folderName = Guid.NewGuid().ToString();
-            string f1 = await GetRandomStreamIdAsync(folderName);
+            string f1 = await GetRandomStreamIdAsync(null, folderName);
 
             IReadOnlyCollection<string> entries = (await _storage.Ls(IOPath.Combine(_pathPrefix, folderName) + "/", false)).Select(e => e.Path.Full).ToList();
 
@@ -264,17 +263,17 @@ namespace Stowage.SelfTest {
         public async Task OpenRead_DoesntExist_ReturnsNull() {
             string id = RandomBlobPath();
 
-            using Stream s = await _storage.OpenRead(id);
+            using Stream? s = await _storage.OpenRead(id);
 
             if(s != null)
-                AssertFail("null stream", s.ToString());
+                AssertFail("null stream", s.ToString()!);
         }
 
         [Test]
         public async Task OpenRead_Existing_NotNull() {
             string id = await GetRandomStreamIdAsync();
 
-            using Stream s = await _storage.OpenRead(id);
+            using Stream? s = await _storage.OpenRead(id!);
 
             if(s == null)
                 AssertFail("some instance", "null stream");
@@ -295,12 +294,12 @@ namespace Stowage.SelfTest {
         public async Task OpenWrite_WriteSync_DisposeSync_ReadsSameText() {
             string text = "write me here on " + DateTime.UtcNow;
 
-            using(Stream s = await _storage.OpenWrite("writeme.txt")) {
+            using(Stream s = await _storage.OpenWrite(IOPath.Combine(_pathPrefix, "writeme.txt"))) {
                 byte[] data = Encoding.UTF8.GetBytes(text);
                 s.Write(data, 0, data.Length);
             }
 
-            string actual = await _storage.ReadText("writeme.txt");
+            string? actual = await _storage.ReadText(IOPath.Combine(_pathPrefix, "writeme.txt"));
             if(actual != text)
                 AssertFail(text, actual);
         }
@@ -310,7 +309,8 @@ namespace Stowage.SelfTest {
             int size = 1024 * 1024 * 10;
             byte[] data = RandomGenerator.GetRandomBytes(size, size);
 
-            using(Stream s = await _storage.OpenWrite("10mb.bin")) {
+            var path = new IOPath(_pathPrefix, "10mb.bin");
+            using(Stream s = await _storage.OpenWrite(path)) {
                 s.Write(data, 0, data.Length);
             }
         }
@@ -320,12 +320,13 @@ namespace Stowage.SelfTest {
         public async Task OpenWrite_WriteAsync_DisposeSync_ReadsSameText() {
             string text = "write me here on " + DateTime.UtcNow;
 
-            using(Stream s = await _storage.OpenWrite("writeme.txt")) {
+            string path = IOPath.Combine(_pathPrefix, "writeme.txt");
+            using(Stream s = await _storage.OpenWrite(path)) {
                 byte[] data = Encoding.UTF8.GetBytes(text);
                 await s.WriteAsync(data, 0, data.Length);
             }
 
-            string actual = await _storage.ReadText("writeme.txt");
+            string? actual = await _storage.ReadText(path);
             if(actual != text)
                 AssertFail(text, actual);
         }
@@ -335,12 +336,13 @@ namespace Stowage.SelfTest {
         public async Task OpenWrite_WriteAsync_DisposeAsync_ReadsSameText() {
             string text = "write me here on " + DateTime.UtcNow;
 
-            await using(Stream s = await _storage.OpenWrite("writeme.txt")) {
+            var path = new IOPath(_pathPrefix, "writeme.txt");
+            await using(Stream s = await _storage.OpenWrite(path)) {
                 byte[] data = Encoding.UTF8.GetBytes(text);
                 await s.WriteAsync(data, 0, data.Length);
             }
 
-            string actual = await _storage.ReadText("writeme.txt");
+            string? actual = await _storage.ReadText(path);
             if(actual != text)
                 AssertFail(text, actual);
         }
@@ -362,9 +364,10 @@ namespace Stowage.SelfTest {
         private async Task WriteText_ReadsSameText() {
             string generatedContent = Guid.NewGuid().ToString();
 
-            await _storage.WriteText("me.txt", generatedContent);
+            var path = new IOPath(_pathPrefix, "me.txt");
+            await _storage.WriteText(path, generatedContent);
 
-            string content = await _storage.ReadText("me.txt");
+            string? content = await _storage.ReadText(path);
 
             if(content != generatedContent)
                 AssertFail(generatedContent, content);
@@ -374,9 +377,11 @@ namespace Stowage.SelfTest {
         private async Task WriteText_SpacesInFilename_ReadsSameText() {
             string generatedContent = Guid.NewGuid().ToString();
 
-            await _storage.WriteText("me space.txt", generatedContent);
+            string id = IOPath.Combine(_pathPrefix, "my space.txt");
 
-            string content = await _storage.ReadText("me space.txt");
+            await _storage.WriteText(id, generatedContent);
+
+            string? content = await _storage.ReadText(id);
 
             if(content != generatedContent)
                 AssertFail(generatedContent, content);
@@ -386,9 +391,10 @@ namespace Stowage.SelfTest {
         private async Task WriteTextInSubfolder_ReadsSameText() {
             string generatedContent = Guid.NewGuid().ToString();
 
-            await _storage.WriteText("sub/me.txt", generatedContent);
+            var path = new IOPath(_pathPrefix, "sub", "me.txt");
+            await _storage.WriteText(path, generatedContent);
 
-            string content = await _storage.ReadText("sub/me.txt");
+            string? content = await _storage.ReadText(path);
 
             if(content != generatedContent)
                 AssertFail(generatedContent, content);
@@ -398,9 +404,10 @@ namespace Stowage.SelfTest {
         private async Task WriteText_Subfolder_ReadsSameText() {
             string generatedContent = Guid.NewGuid().ToString();
 
-            await _storage.WriteText("me.txt", generatedContent);
+            var path = new IOPath(_pathPrefix, "me.txt");
+            await _storage.WriteText(path, generatedContent);
 
-            string content = await _storage.ReadText("me.txt");
+            string? content = await _storage.ReadText(path);
 
             if(content != generatedContent)
                 AssertFail(generatedContent, content);
@@ -446,8 +453,9 @@ namespace Stowage.SelfTest {
         [Test]
         private async Task Json_Write_ReadsSameJson() {
             var t0 = new TestObject { Name = "name1" };
-            await _storage.WriteAsJson("1.json", t0);
-            TestObject t1 = await _storage.ReadAsJson<TestObject>("1.json");
+            var path = new IOPath(_pathPrefix, "1.json");
+            await _storage.WriteAsJson(path, t0);
+            TestObject? t1 = await _storage.ReadAsJson<TestObject>(path);
 
             if(t0.Name != t1.Name)
                 AssertFail(t0.Name, t1.Name);
@@ -470,7 +478,7 @@ namespace Stowage.SelfTest {
 
             await _storage.Rm(path);
 
-            IReadOnlyCollection<string> entries = (await _storage.Ls("/")).Select(e => e.Path.Full).ToList();
+            IReadOnlyCollection<string> entries = (await _storage.Ls(_pathPrefix)).Select(e => e.Path.Full).ToList();
 
             if(entries.Contains(path))
                 AssertFail($"not to contain [{path}]", "contains");
@@ -484,7 +492,7 @@ namespace Stowage.SelfTest {
             await _storage.Rm(path1);
             await _storage.Rm(path2);
 
-            IReadOnlyCollection<string> entries = (await _storage.Ls("/")).Select(e => e.Path.Full).ToList();
+            IReadOnlyCollection<string> entries = (await _storage.Ls(_pathPrefix)).Select(e => e.Path.Full).ToList();
 
             if(entries.Contains(path1))
                 AssertFail($"not to contain [{path1}]", "contains");
@@ -499,12 +507,12 @@ namespace Stowage.SelfTest {
         private async Task Rm_Directory_Deletes() {
             string prefix = "Rm_Directory_Deletes";
 
-            string path1 = await GetRandomStreamIdAsync(prefix);
-            string path2 = await GetRandomStreamIdAsync(prefix);
+            string path1 = await GetRandomStreamIdAsync(null, prefix);
+            string path2 = await GetRandomStreamIdAsync(null, prefix);
 
-            await _storage.Rm(prefix, true);
+            await _storage.Rm(new IOPath(_pathPrefix, prefix), true);
 
-            IReadOnlyCollection<string> entries = (await _storage.Ls()).Select(e => e.Path.Full).ToList();
+            IReadOnlyCollection<string> entries = (await _storage.Ls(_pathPrefix)).Select(e => e.Path.Full).ToList();
 
             if(entries.Contains(prefix))
                 AssertFail($"not to contain [{prefix}]", "contains");
@@ -512,7 +520,7 @@ namespace Stowage.SelfTest {
 
         [Test]
         private async Task Rm_FileDoesNotExist_Ignores() {
-            await _storage.Rm(Guid.NewGuid().ToString());
+            await _storage.Rm(new IOPath(_pathPrefix, Guid.NewGuid().ToString()));
         }
 
         [Test]
@@ -525,7 +533,10 @@ namespace Stowage.SelfTest {
 
         [Test]
         private async Task Exists_Doesnt_False() {
-            if(await _storage.Exists(Guid.NewGuid().ToString()))
+
+            string path = new IOPath(_pathPrefix, Guid.NewGuid().ToString());
+
+            if(await _storage.Exists(path))
                 AssertFail("not to exist", "exists");
         }
 

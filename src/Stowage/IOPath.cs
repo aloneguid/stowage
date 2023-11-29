@@ -61,10 +61,13 @@ namespace Stowage {
             }
         }
 
-        public IOPath(params string[] parts) : this(IOPath.Combine(parts)) {
+        public IOPath(params string?[] parts) : this(IOPath.Combine(parts)) {
 
         }
 
+        /// <summary>
+        /// Gets full path, including trailing slash in case it's a folder.
+        /// </summary>
         public string Full => _path;
 
         /// <summary>
@@ -82,18 +85,27 @@ namespace Stowage {
         /// </summary>
         public string NLWTS => _pathWtithNoLeadingAndWithTralingSlash ??= Normalize(_path, true, true);
 
+        /// <summary>
+        /// Gets parent path of this item.
+        /// </summary>
         public IOPath Parent => _parent ??= GetParent(_path);
 
+        /// <summary>
+        /// File or folder name. If path is root, returns "/". Folder names do not end with "/".
+        /// </summary>
         public string Name => _name;
 
+        /// <summary>
+        /// Returns folder path. If path is root, returns "/". Ends with "/".
+        /// </summary>
         public string Folder => _folderPath;
 
         /// <summary>
         /// Constructs a file blob by full ID
         /// </summary>
-        public static implicit operator IOPath?(string? path) {
+        public static implicit operator IOPath(string? path) {
             if(path == null)
-                return null;
+                return IOPath.Root;
 
             return new IOPath(path);
         }
@@ -102,21 +114,21 @@ namespace Stowage {
         /// Converts blob to string by using full path
         /// </summary>
         /// <param name="path"></param>
-        public static implicit operator string?(IOPath? path) => path?.Full;
+        public static implicit operator string(IOPath? path) => path?.Full ?? RootFolderPath;
 
         /// <summary>
         /// Combines parts of path
         /// </summary>
         /// <param name="parts"></param>
         /// <returns></returns>
-        public static string Combine(IEnumerable<string> parts) {
+        public static string Combine(IEnumerable<string?> parts) {
             if(parts == null)
                 return Normalize(null);
 
             string? last = null;
             var cp = new List<string>();
 
-            foreach(string part in parts) {
+            foreach(string? part in parts) {
                 if(part == null)
                     continue;
 
@@ -160,8 +172,8 @@ namespace Stowage {
         /// <param name="root"></param>
         /// <returns></returns>
         public static string RelativeTo(string path, string root) {
-            string[] pathParts = Split(path);
-            string[] rootParts = Split(root);
+            string[]? pathParts = Split(path);
+            string[]? rootParts = Split(root);
 
             if(pathParts == null || rootParts == null || rootParts.Length >= pathParts.Length)
                 return RootFolderPath;
@@ -181,7 +193,7 @@ namespace Stowage {
         /// </summary>
         /// <param name="parts"></param>
         /// <returns></returns>
-        public static string Combine(params string[] parts) => Combine((IEnumerable<string>)parts);
+        public static string Combine(params string?[] parts) => Combine((IEnumerable<string?>)parts);
 
         /// <summary>
         /// Combines this part with another part and returns a new instance of <see cref="IOPath"/>
@@ -289,12 +301,24 @@ namespace Stowage {
         /// Removes root folder from path
         /// </summary>
         public static string RemoveRoot(string path) {
-            string[] parts = Split(path);
-            if(parts.Length == 1)
+            string[]? parts = Split(path);
+            if(parts == null || parts.Length == 1)
                 return path;
 
             return Combine(parts.Skip(1));
 
+        }
+
+        public void ExtractPrefixAndRelativePath(out string prefix, out IOPath relativePath) {
+            if(IsRootPath) {
+                prefix = RootFolderPath;
+                relativePath = this;
+                return;
+            }
+
+            string[] parts = Split(_path)!;
+            prefix = parts[0].Trim(PathSeparatorChar);
+            relativePath = Combine(parts.Skip(1))!;
         }
 
         /// <summary>
@@ -311,9 +335,9 @@ namespace Stowage {
         /// <param name="newFileName"></param>
         /// <returns></returns>
         public static string Rename(string path, string newFileName) {
-            string[] parts = Split(path);
+            string[]? parts = Split(path);
 
-            if(parts.Length == 1)
+            if(parts == null || parts.Length == 1)
                 return newFileName;
 
             return Combine(Combine(parts.Take(parts.Length - 1)), newFileName);
