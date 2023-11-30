@@ -258,7 +258,7 @@ namespace Stowage.Impl.Microsoft {
             return IOPath.Normalize(_containerName == null ? IOPath.RemoveRoot(path) : path, true);
         }
 
-        public override async Task<Stream> OpenRead(IOPath path, CancellationToken cancellationToken = default) {
+        public override async Task<Stream?> OpenRead(IOPath path, CancellationToken cancellationToken = default) {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
 
@@ -279,11 +279,11 @@ namespace Stowage.Impl.Microsoft {
             //return response.Content;
         }
 
-        public override async Task Rm(IOPath path, bool recurse, CancellationToken cancellationToken = default) {
+        public override async Task Rm(IOPath path, CancellationToken cancellationToken = default) {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
 
-            if(recurse) {
+            if(path.IsFolder) {
                 await RmRecurseWithLs(path, cancellationToken);
             } else {
                 // https://docs.microsoft.com/en-us/rest/api/storageservices/delete-blob
@@ -293,5 +293,7 @@ namespace Stowage.Impl.Microsoft {
                 }
             }
         }
+
+        public override Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 }

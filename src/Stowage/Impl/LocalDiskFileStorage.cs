@@ -64,6 +64,14 @@ namespace Stowage.Impl {
                    "LastAccessTimeUtc", info.LastAccessTimeUtc,
                    "Attributes", info.Attributes);
 
+#if NET6_0_OR_GREATER
+                entry.TryAddProperties("LinkTarget", info.LinkTarget);
+#endif
+
+#if NET8_0_OR_GREATER
+                entry.TryAddProperties("UnixFileMode", info.UnixFileMode);
+#endif
+
                 if(!isFolder) {
                     var fi = (FileInfo)info;
                     entry.Size = fi.Length;
@@ -93,7 +101,7 @@ namespace Stowage.Impl {
         }
 
 
-        public override Task Rm(IOPath path, bool recurse, CancellationToken cancellationToken = default) {
+        public override Task Rm(IOPath path, CancellationToken cancellationToken = default) {
             if(path == null)
                 throw new ArgumentNullException(nameof(path));
 
@@ -108,6 +116,19 @@ namespace Stowage.Impl {
             return Task.CompletedTask;
         }
 
+        public override Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default) {
+            if(path == null)
+                throw new ArgumentNullException(nameof(path));
+
+            string localPath = GetFilePath(path, false);
+            if(!File.Exists(localPath) && !Directory.Exists(localPath))
+                return Task.FromResult<IOEntry?>(null);
+
+            var fsi = new FileInfo(localPath);
+            return Task.FromResult<IOEntry?>(ToIOEntry(fsi, true));
+        }
+
+
         private static string EncodePathPart(string path) {
             return path;
         }
@@ -115,7 +136,7 @@ namespace Stowage.Impl {
         private Stream? OpenStream(string path) {
             path = GetFilePath(path, false);
 
-            if(!SysIO.File.Exists(path))
+            if(!File.Exists(path))
                 return null;
 
             return SysIO.File.OpenRead(path);

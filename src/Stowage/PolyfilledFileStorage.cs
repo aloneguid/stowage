@@ -73,7 +73,7 @@ namespace Stowage {
         }
 
 
-        public abstract Task Rm(IOPath path, bool recurse = false, CancellationToken cancellationToken = default);
+        public abstract Task Rm(IOPath path, CancellationToken cancellationToken = default);
 
         protected async Task RmRecurseWithLs(IOPath path, CancellationToken cancellationToken) {
             IReadOnlyCollection<IOEntry> entries = await Ls(path.WTS, true);
@@ -81,7 +81,7 @@ namespace Stowage {
                 if(!entry.Path.IsFile)
                     continue;
 
-                await Rm(entry.Path, false, cancellationToken);
+                await Rm(entry.Path, cancellationToken);
             }
         }
 
@@ -90,6 +90,8 @@ namespace Stowage {
                 return s != null;
             }
         }
+
+        public abstract Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default);
 
         public virtual async Task Ren(IOPath oldPath, IOPath newPath, CancellationToken cancellationToken = default) {
             if(oldPath is null)
@@ -132,5 +134,6 @@ namespace Stowage {
         public virtual void Dispose() {
 
         }
+
     }
 }

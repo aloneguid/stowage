@@ -72,13 +72,14 @@ namespace Stowage {
 
         /// <summary>
         /// Deletes a single object by it's full path.
+        /// If object doesn't exist, this method does nothing.
+        /// If object is a folder, it is deleted recursively.
         /// </summary>
         /// <param name="path">Path to delete. If this path points to a folder, the folder is deleted recursively.</param>
-        /// <param name="recurse">Considers path parameters a directory (or a container, or a path prefix, depending on implementation) and removes everything recursively.</param>
         /// <param name="cancellationToken"></param>
         /// <exception cref="ArgumentNullException">Thrown when ID is null.</exception>
         /// <exception cref="ArgumentException">Thrown when ID is too long. Long IDs are the ones longer than 50 characters.</exception>
-        Task Rm(IOPath path, bool recurse = false, CancellationToken cancellationToken = default);
+        Task Rm(IOPath path, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Checks if blobs exists in the storage
@@ -88,16 +89,21 @@ namespace Stowage {
         /// <returns>List of results of true and false indicating existence</returns>
         Task<bool> Exists(IOPath path, CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Retreives metadata about the object without downloading it.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>Object metadata, or null if object does not exist.</returns>
+        Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default);
+
         Task Ren(IOPath name, IOPath newName, CancellationToken cancellationToken = default);
 
         // todo:
         // - read/write as bytes (maybe span?)
-        // - read to stream
         // - read to file
         // - write from file
-        // - json r/w
         // - copy
-        // - rename
         // - move
     }
 }

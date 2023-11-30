@@ -6,6 +6,7 @@
         <IsPackable>false</IsPackable>
         <SignAssembly>True</SignAssembly>
         <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

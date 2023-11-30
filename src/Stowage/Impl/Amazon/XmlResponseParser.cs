@@ -154,5 +154,46 @@ namespace Stowage.Impl.Amazon {
             }
             return result;
         }
+
+        public IOEntry ParseGetObjectAttributesResponse(IOPath path, string xml) {
+
+            /*
+<?xml version="1.0" encoding="UTF-8"?>
+<GetObjectAttributesResponse xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+    <ETag>92b234967d7ea002217aef0231e0ce7a-1</ETag>
+    <StorageClass>STANDARD</StorageClass>
+    <ObjectSize>15</ObjectSize>
+</GetObjectAttributesResponse>
+             */
+
+            var result = new IOEntry(path);
+            using(var sr = new StringReader(xml)) {
+                using(var xr = XmlReader.Create(sr)) {
+                    string? en = null;
+                    while(xr.Read()) {
+                        if(xr.NodeType == XmlNodeType.Element) {
+                            switch(xr.Name) {
+                                case "GetObjectAttributesResponse":
+                                    while(xr.Read() && !(xr.NodeType == XmlNodeType.EndElement && xr.Name == "GetObjectAttributesResponse")) {
+                                        if(xr.NodeType == XmlNodeType.Element)
+                                            en = xr.Name;
+                                        else if(xr.NodeType == XmlNodeType.Text) {
+                                            if(en == "ObjectSize") {
+                                                result.Size = long.Parse(xr.Value);
+                                            } else {
+                                                result.Properties.Add(en, xr.Value);
+                                            }
+                                        }
+                                    }
+
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }

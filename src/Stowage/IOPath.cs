@@ -21,7 +21,7 @@ namespace Stowage {
         /// <summary>
         /// Character used to split paths, as array of single character.
         /// </summary>
-        public static readonly char[] PathSeparatorChar = new[] { PathSeparator };
+        public static readonly char[] PathSeparatorChar = [PathSeparator];
 
         /// <summary>
         /// Returns '/'
@@ -37,16 +37,20 @@ namespace Stowage {
         private readonly string _path;
         private readonly string _name;
         private readonly string _folderPath;
-        private string _parent;
-        private string _pathWithTrailingSlash;
-        private string _pathNoLeadingSlash;
-        private string _pathWtithNoLeadingAndWithTralingSlash;
+        private string? _parent;
+        private string? _pathWithTrailingSlash;
+        private string? _pathNoLeadingSlash;
+        private string? _pathWtithNoLeadingAndWithTralingSlash;
 
         /// <summary>
         /// Shorthand for root path
         /// </summary>
         public static IOPath Root { get; } = new IOPath(RootFolderPath);
 
+        /// <summary>
+        /// Constructs a new instance of <see cref="IOPath"/> from a string path.
+        /// </summary>
+        /// <param name="path">Full path. Normalisation is performed during creation stage.</param>
         public IOPath(string path) {
             _path = Normalize(path);
 
@@ -54,10 +58,10 @@ namespace Stowage {
                 _name = RootFolderPath;
                 _folderPath = RootFolderPath;
             } else {
-                string[] parts = Split(path);
+                string[]? parts = Split(path);
 
                 _name = parts.Last();
-                _folderPath = GetParent(path);
+                _folderPath = GetParent(path)!;
             }
         }
 
@@ -200,7 +204,15 @@ namespace Stowage {
         /// </summary>
         /// <param name="nextPart"></param>
         /// <returns></returns>
-        public IOPath Combine(string nextPart) => Combine(_path, nextPart);
+        public IOPath Combine(string? nextPart) => Combine(_path, nextPart);
+
+        /// <summary>
+        /// Appends a path part to the current path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="nextPart"></param>
+        /// <returns></returns>
+        public static IOPath operator /(IOPath path, string? nextPart) => path.Combine(nextPart);
 
         /// <summary>
         /// Normalizes path. Normalisation makes sure that:
@@ -379,6 +391,13 @@ namespace Stowage {
                 string path = cp.Replace("C:\\", "").Replace("\\", "/") + "/";
                 return new IOPath(path);
             }
+        }
+
+        public IOPath RelativeTo(IOPath root) {
+            int rl = root.Full.Length;
+            if(rl > Full.Length)
+                throw new ArgumentException("Root path is longer than this path", nameof(root));
+            return new IOPath(Full.Substring(rl));
         }
 
         /// <summary>

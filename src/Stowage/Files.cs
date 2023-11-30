@@ -183,24 +183,20 @@ namespace Stowage {
         /// Read more at https://min.io/docs/minio/linux/index.html
         /// </summary>
         /// <param name="_"></param>
-        /// <param name="endpoint">Minio endpoint, for example http://localhost:9000</param>
-        /// <param name="bucketName">Minio bucket name</param>
+        /// <param name="endpoint">Minio endpoint, for example http://localhost:9000. This endpoint should not include bucket name in hostname or path.</param>
         /// <param name="accessKeyId">Access key you can get from Minio's console "Access keys" tab.</param>
         /// <param name="secretAccessKey">Secret key for the access key above</param>
         /// <returns></returns>
         public static IAwsS3FileStorage Minio(this IFilesFactory _,
             Uri endpoint,
-            string bucketName,
             string accessKeyId,
             string secretAccessKey,
             string region = "") {
 
-            // bucket name should be included as a part of the path in Minio
-            var bucketEndpoint = new Uri(endpoint, bucketName + "/");
-
             return new AwsS3FileStorage(
-               bucketEndpoint,
-               new S3AuthHandler(accessKeyId, secretAccessKey, null, region));
+                endpoint,
+                new S3AuthHandler(accessKeyId, secretAccessKey, null, region),
+                BucketAddressingStyle.Path);
         }
 
         public static IFileStorage DigitalOceanSpaces(this IFilesFactory _, string region, string accessKeyId, string secretAccessKey) {

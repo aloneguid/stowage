@@ -23,6 +23,8 @@ namespace Stowage.Test {
 
         string MinioSecret { get; }
 
+        string MinioBucket { get; }
+
         string GcpBucket { get; }
 
         string GcpCred { get; }

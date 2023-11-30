@@ -112,5 +112,11 @@ namespace Stowage.Test {
             Assert.Equal(expectedPrefix, prefix);
             Assert.Equal(expectedRelativePath, relativePath.Full);
         }
+
+        [Theory]
+        [InlineData("/one/two", "/one", "/two")]
+        public void RelativeTo_theory(string input, string relativeTo, string expectation) {
+            Assert.Equal(expectation, new IOPath(input).RelativeTo(relativeTo).Full);
+        }
     }
 }

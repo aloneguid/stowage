@@ -5,7 +5,7 @@ using Config.Net;
 using Stowage.Impl.Microsoft;
 using Xunit;
 
-namespace Stowage.Test.Impl {
+namespace Stowage.Test.Integration.Impl {
     [Trait("Category", "Integration")]
     public class AzureBlobTest {
         private readonly IAzureBlobFileStorage _storage;

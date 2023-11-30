@@ -93,7 +93,7 @@ namespace Stowage.Impl {
         }
 
 
-        public override Task Rm(IOPath path, bool recurse, CancellationToken cancellationToken = default) {
+        public override Task Rm(IOPath path, CancellationToken cancellationToken = default) {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
 
@@ -102,7 +102,7 @@ namespace Stowage.Impl {
                 _pathToTag.Remove(path);
             }
 
-            if(path.IsFolder && recurse) {
+            if(path.IsFolder) {
                 List<IOPath> candidates = _pathToTag.Where(p => p.Key.Full.StartsWith(path.Full)).Select(p => p.Key).ToList();
 
                 foreach(IOPath candidate in candidates) {
@@ -152,5 +152,7 @@ namespace Stowage.Impl {
 
             return _pathToTag.ContainsKey(fullPath);
         }
+
+        public override Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 }

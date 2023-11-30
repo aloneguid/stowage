@@ -190,13 +190,13 @@ namespace Stowage.Impl.Databricks {
         }
 
 
-        public override async Task Rm(IOPath path, bool recurse = false, CancellationToken cancellationToken = default) {
+        public override async Task Rm(IOPath path, CancellationToken cancellationToken = default) {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
 
             // https://docs.databricks.com/dev-tools/api/latest/dbfs.html#delete
 
-            await Dbfs<DeleteRequest, object>("delete", new DeleteRequest { Path = path, Recursive = recurse });
+            await Dbfs<DeleteRequest, object>("delete", new DeleteRequest { Path = path, Recursive = true });
         }
 
         private async Task<TResponse> Dbfs<TRequest, TResponse>(string command, TRequest request, HttpMethod method = null) {
@@ -618,6 +618,8 @@ namespace Stowage.Impl.Databricks {
             throw new HttpRequestException(
                $"request failed with code {(int)response.StatusCode} '{response.StatusCode}'. {jem.Message}.");
         }
+
+        public override Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 
         public class GetAclResponse {
             [JsonPropertyName("access_control_list")]

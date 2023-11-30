@@ -1,8 +1,10 @@
 ﻿## 2.0.0
 
+2.0.0 introduces massive *ergonomic improvements* and breaking changes.
+
 ### New features
 
-#### Breaking change for AWS S3 users
+#### Breaking change for AWS S3 and Minio users
 
 Factory methods for S3 do not have bucket name anymore. Instead, you need to pass bucket name as a part of the file path.
 
@@ -14,10 +16,14 @@ This syntax makes accessing multiple buckets more ergonomic. In addition to that
 
 #### Other new features
 
+- **breaking:** `Rm` operation now has no `recurse` flag. Passing a file deletes a file, passing a folder deletes the folder recursively. It's just magic.
+- New operation `Stat` retrieves object information without downloading it.
+
 ### Improvements
 
 - AWS CLI configuration parser also picks up default region from `~/.aws/config` file.
 - S3 error messages are improved, taking response message from http api response.
+- Enabled [nullable reference types](https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references) and fixed a lot of null checks.
 
 ### Bugs fixed
 

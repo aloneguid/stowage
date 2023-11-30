@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Stowage.Impl.Amazon;
 using Xunit;
 
-namespace Stowage.Test.Impl {
+namespace Stowage.Test.Integration.Impl {
 
     [Trait("Category", "Integration")]
     public class AwsS3Test {

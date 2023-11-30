@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Text;
 
 namespace Stowage {
@@ -23,6 +24,13 @@ namespace Stowage {
                 result = result.Substring(0, i);
 
             return result;
+        }
+
+        public static string? GetHeaderValue(this HttpResponseMessage response, string headerName) {
+            if(!response.Headers.TryGetValues(headerName, out IEnumerable<string>? values))
+                return null;
+
+            return string.Join(",", values);
         }
     }
 }

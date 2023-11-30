@@ -30,14 +30,14 @@ namespace Stowage.Impl.Amazon {
                 string bucketPart = bucketName == null ? "" : bucketName + ".";
                 uri = new Uri($"{_endpoint.Scheme}://{bucketPart}{_endpoint.Authority}");
             } else {
-                uri = new Uri($"{_endpoint.Scheme}://{_endpoint.Authority}/{bucketName}");
+                uri = new Uri($"{_endpoint.Scheme}://{_endpoint.Authority}/{bucketName}/");
             }
             return new Uri(uri, pathAndQuery).ToString();
         }
 
         public override async Task<IReadOnlyCollection<IOEntry>> Ls(IOPath? path, bool recurse = false, CancellationToken cancellationToken = default) {
             if(path != null && !path.IsFolder)
-                throw new ArgumentException("path needs to be a folder", nameof(path));
+                throw new ArgumentException("path needs to be a folder (end with '/')", nameof(path));
 
             // listing root folder is a special case - list buckets
             if(path == null || path.IsRootPath) {
@@ -107,21 +107,18 @@ namespace Stowage.Impl.Amazon {
             return _xmlParser.ParseListBucketsResponse(xml);
         }
 
-        public override async Task Rm(IOPath? path, bool recurse, CancellationToken cancellationToken = default) {
+        public override async Task Rm(IOPath? path, CancellationToken cancellationToken = default) {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
 
-            if(recurse) {
+            if(path.IsFolder) {
                 await RmRecurseWithLs(path, cancellationToken);
             } else {
-
-                if(path != null) {
-                    // call https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
-                    path.ExtractPrefixAndRelativePath(out string bucketName, out IOPath relativePath);
-                    await SendAsync(
-                       new HttpRequestMessage(HttpMethod.Delete, MakeUrl(bucketName, relativePath.NLS)),
-                       true);
-                }
+                // call https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
+                path.ExtractPrefixAndRelativePath(out string bucketName, out IOPath relativePath);
+                await SendAsync(
+                    new HttpRequestMessage(HttpMethod.Delete, MakeUrl(bucketName, relativePath.NLS)),
+                    true);
             }
         }
 
@@ -149,6 +146,73 @@ namespace Stowage.Impl.Amazon {
                 await ThrowFromResponse(response);
 
             return await response.Content.ReadAsStreamAsync();
+        }
+
+        public async override Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default) {
+            if(path is null)
+                throw new ArgumentNullException(nameof(path));
+
+            path.ExtractPrefixAndRelativePath(out string bucketName, out IOPath relativePath);
+
+            // https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html
+            var request = new HttpRequestMessage(
+                HttpMethod.Head,
+                MakeUrl(bucketName, $"{IOPath.Normalize(relativePath, true)}"));
+
+            HttpResponseMessage response = await SendAsync(request);
+            if(response.StatusCode == HttpStatusCode.NotFound)
+                return null;
+
+            if(!response.IsSuccessStatusCode)
+                await ThrowFromResponse(response);
+
+            var e = new IOEntry(path) {
+                Size = response.Content.Headers.ContentLength,
+                LastModificationTime = response.Content.Headers.LastModified
+            };
+            e.TryAddProperties(
+                "ContentType", response.Content.Headers.ContentType?.ToString(),
+                "ETag", response.Headers.ETag?.ToString(),
+                "Server", response.Headers.Server?.ToString(),
+                "ServerSideEncryption", response.GetHeaderValue("x-amz-server-side-encryption"),
+                "StorageClass", response.GetHeaderValue("x-amz-storage-class"),
+                "VersionId", response.GetHeaderValue("x-amz-version-id"),
+                "WebsiteRedirectLocation", response.GetHeaderValue("x-amz-website-redirect-location"));
+            return e;
+        }
+
+        /// <summary>
+        /// Strangely enough, Minio does not support this call, therefore I'm leaving it out for now.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        private async Task<IOEntry?> GetObjectAttributes(IOPath path, CancellationToken cancellationToken = default) {
+            // https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectAttributes.html
+
+            if(path is null)
+                throw new ArgumentNullException(nameof(path));
+
+            path.ExtractPrefixAndRelativePath(out string bucketName, out IOPath relativePath);
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                MakeUrl(bucketName, $"{IOPath.Normalize(relativePath, true)}?attributes"));
+            request.Headers.Add("x-amz-object-attributes", "ETag,Checksum,StorageClass,ObjectSize");
+
+            HttpResponseMessage response = await SendAsync(request);
+
+            if(response.StatusCode == HttpStatusCode.NotFound)
+                return null;
+
+            if(!response.IsSuccessStatusCode)
+                await ThrowFromResponse(response);
+
+            string xml = await response.Content.ReadAsStringAsync();
+            IOEntry entry = _xmlParser.ParseGetObjectAttributesResponse(path, xml);
+            entry.LastModificationTime = response.Content.Headers.LastModified;
+            return entry;
         }
 
         public override async Task<Stream> OpenWrite(IOPath? path, CancellationToken cancellationToken = default) {
@@ -260,7 +324,6 @@ namespace Stowage.Impl.Amazon {
             }
             return response;
         }
-
 
         #endregion
     }
