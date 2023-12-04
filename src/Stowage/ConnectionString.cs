@@ -4,7 +4,8 @@ using System.Text;
 
 namespace Stowage {
     /// <summary>
-    /// Holds a parsed connection string to the storage
+    /// Holds a parsed connection string to the storage.
+    /// Originally designed to parse a string, but can be used to accept any key-value source like .ini files.
     /// </summary>
     public class ConnectionString {
         private const string PrefixSeparator = "://";
@@ -12,52 +13,46 @@ namespace Stowage {
         private static readonly char[] PartSeparator = ['='];
 
         private readonly Dictionary<string, string> _parts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private string? _nativeConnectionString;
 
         /// <summary>
         /// Creates a new instance of <see cref="ConnectionString"/>
         /// </summary>
         /// <param name="connectionString"></param>
         public ConnectionString(string connectionString) {
-            Raw = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
-
-            Parse(connectionString);
+            Prefix = ParseAndGetPrefix(connectionString);
         }
 
         /// <summary>
-        /// Gets or sets connection string parameters
+        /// Creates a new instance of <see cref="ConnectionString"/> using key-value pairs
+        /// </summary>
+        /// <param name="parameters"></param>
+        public ConnectionString(Dictionary<string, string> parameters) {
+            _parts = parameters;
+            if(!_parts.TryGetValue(KnownParameter.Prefix, out string? prefix)) {
+                throw new ArgumentException($"'{KnownParameter.Prefix}' is required", nameof(parameters));
+            }
+            Prefix = prefix;
+        }
+
+        /// <summary>
+        /// Gets or sets connection string parameters. Trying to fetch by null or non-existing key returns null.
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public string this[string key] {
+        public string? this[string? key] {
             get {
                 if(key == null)
                     return null;
-                _parts.TryGetValue(key, out string value);
+                _parts.TryGetValue(key, out string? value);
                 return value;
             }
             set {
-                if(key == null)
+                if(key == null || value == null)
                     return;
 
                 _parts[key] = value;
             }
         }
-
-        /// <summary>
-        /// Determines if this is a native connection string
-        /// </summary>
-        public bool IsNative => _nativeConnectionString != null;
-
-        /// <summary>
-        /// Returns native connection string, or null if connection string is not native
-        /// </summary>
-        public string? Native => _nativeConnectionString;
-
-        /// <summary>
-        /// Original connection string
-        /// </summary>
-        public string Raw { get; private set; }
 
         /// <summary>
         /// Connection string parameters exposed as key-value pairs
@@ -67,7 +62,7 @@ namespace Stowage {
         /// <summary>
         /// Prefix of this connection string, excluding prefix separator, i.e. for 'disk://something' the prefix is 'disk'
         /// </summary>
-        public string? Prefix { get; private set; }
+        public string Prefix { get; private set; }
 
         /// <summary>
         /// Gets the value of the parameter as when it's required. When parameter is not present, throws standard <see cref="ArgumentException"/>
@@ -80,13 +75,15 @@ namespace Stowage {
                 throw new ArgumentNullException(nameof(parameterName));
             }
 
-            if(!_parts.TryGetValue(parameterName, out value)) {
+            if(!_parts.TryGetValue(parameterName, out string? value1)) {
                 throw new ArgumentException($"connection string requires '{parameterName}' parameter.");
             }
 
-            if(requireNonEmptyValue && string.IsNullOrEmpty(value)) {
+            if(requireNonEmptyValue && string.IsNullOrEmpty(value1)) {
                 throw new ArgumentException($"parameter '{parameterName}' is present but value is not set.");
             }
+
+            value = value1;
         }
 
         /// <summary>
@@ -102,23 +99,21 @@ namespace Stowage {
             return value;
         }
 
-        private void Parse(string connectionString) {
+        private string ParseAndGetPrefix(string connectionString) {
             int idx = connectionString.IndexOf(PrefixSeparator);
 
             if(idx == -1) {
-                Prefix = connectionString;
-                return;
+                return connectionString;
             }
 
-            Prefix = connectionString.Substring(0, idx);
+            string prefix = connectionString.Substring(0, idx);
             connectionString = connectionString.Substring(idx + PrefixSeparator.Length);
 
             // prefix extracted, now get the parts of the string
 
             //check if this is a native connection string
             if(connectionString.StartsWith(KnownParameter.Native + "=")) {
-                _nativeConnectionString = connectionString.Substring(KnownParameter.Native.Length + 1);
-                _parts[KnownParameter.Native] = _nativeConnectionString;
+                _parts[KnownParameter.Native] = connectionString.Substring(KnownParameter.Native.Length + 1);
             } else {
                 string[] parts = connectionString.Split(PartsSeparators, StringSplitOptions.RemoveEmptyEntries);
                 foreach(string part in parts) {
@@ -126,9 +121,11 @@ namespace Stowage {
 
                     string key = kv[0];
                     string value = kv.Length == 1 ? string.Empty : kv[1];
-                    _parts[key] = value.UrlDecode();
+                    _parts[key] = value.UrlDecode()!;
                 }
             }
+
+            return prefix;
         }
 
         /// <summary>
@@ -140,10 +137,10 @@ namespace Stowage {
             sb.Append(Prefix);
             sb.Append(PrefixSeparator);
 
-            if(IsNative) {
+            if(_parts.TryGetValue(KnownParameter.Native, out string? nativeConnectionString)) {
                 sb.Append(KnownParameter.Native);
                 sb.Append(PartSeparator);
-                sb.Append(Native);
+                sb.Append(nativeConnectionString);
             } else {
 
                 bool first = true;

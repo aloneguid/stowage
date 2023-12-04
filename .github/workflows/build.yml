@@ -1,7 +1,7 @@
 ﻿name: build
 
 env:
-  v: '2.0.0-pre.2'
+  v: '2.0.0-pre.3'
   av: '2.0.0'
 
 on:

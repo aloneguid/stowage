@@ -38,5 +38,24 @@ namespace Stowage {
 
             return instance;
         }
+
+        public static IFileStorage Create(Dictionary<string, string> parameters) {
+            if(parameters is null)
+                throw new ArgumentNullException(nameof(parameters));
+
+            var pcs = new ConnectionString(parameters);
+
+            IFileStorage? instance = Factories
+               .Select(f => f.Create(pcs))
+               .FirstOrDefault(b => b != null);
+
+            if(instance == null) {
+                throw new ArgumentException(
+                   $"could not create any implementation based on the passed connection string (prefix: {pcs.Prefix}), did you register required external module?",
+                   nameof(parameters));
+            }
+
+            return instance;
+        }
     }
 }

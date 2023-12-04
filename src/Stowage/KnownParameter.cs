@@ -3,6 +3,12 @@
     /// Known parameter names enouraged to be used in connection strings
     /// </summary>
     public static class KnownParameter {
+
+        /// <summary>
+        /// Type of the storage like "s3", "az" etc.
+        /// </summary>
+        public static readonly string Prefix = "type";
+
         /// <summary>
         /// Indicates that this connection string is native
         /// </summary>

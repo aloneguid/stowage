@@ -1,4 +1,6 @@
-﻿using Xunit;
+﻿using System;
+using System.Collections.Generic;
+using Xunit;
 
 namespace Stowage.Test {
     public class ConnectionStringTest {
@@ -8,8 +10,6 @@ namespace Stowage.Test {
 
             var scs = new ConnectionString(cs);
 
-            Assert.Equal(cs, scs.Raw);
-
             scs.GetRequired("account", false, out string account);
             scs.GetRequired("key", false, out string key);
             scs.GetRequired("container", false, out string container);
@@ -17,8 +17,6 @@ namespace Stowage.Test {
             Assert.Equal("accname", account);
             Assert.Equal("keywithequals==", key);
             Assert.Equal("me", container);
-            Assert.False(scs.IsNative);
-            Assert.Null(scs.Native);
         }
 
         [Fact]
@@ -53,8 +51,6 @@ namespace Stowage.Test {
 
             Assert.Equal("local", cs.Prefix);
             Assert.Single(cs.Parameters);
-            Assert.True(cs.IsNative);
-            Assert.Equal(native, cs.Native);
             Assert.Equal(native, cs.Parameters["native"]);
 
             //convert back to string
@@ -74,6 +70,14 @@ namespace Stowage.Test {
 
             cs = new ConnectionString(css);
             Assert.Equal(valueToSave, cs["key"]);
+        }
+
+        [Fact]
+        public void TypeTag_required() {
+
+            Assert.Throws<ArgumentException>(() => new ConnectionString(new Dictionary<string, string> {
+                { "key", "value" }
+            }));
         }
     }
 }

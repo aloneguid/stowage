@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -59,6 +60,16 @@ namespace Stowage {
         }
 
         /// <summary>
+        /// Instantiate a storage from the list of key-value pairs
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        public static IFileStorage Parameters(this IFilesFactory _, Dictionary<string, string> parameters) {
+            return ConnectionStringFactory.Create(parameters);
+        }
+
+        /// <summary>
         /// Instantiate local disk storage mapped to a directory.
         /// </summary>
         /// <param name="_"></param>
@@ -85,9 +96,9 @@ namespace Stowage {
         /// Instantiate internal memory storage
         /// </summary>
         /// <param name="_"></param>
-        /// <param name="id"></param>
+        /// <param name="id">Optional instance identifier. Instances with the same ID are referring to the same instance.</param>
         /// <returns></returns>
-        public static IFileStorage InternalMemory(this IFilesFactory _, string id = null) {
+        public static IFileStorage InternalMemory(this IFilesFactory _, string? id = null) {
             return InMemoryFileStorage.CreateOrGet(id);
         }
 
@@ -186,6 +197,7 @@ namespace Stowage {
         /// <param name="endpoint">Minio endpoint, for example http://localhost:9000. This endpoint should not include bucket name in hostname or path.</param>
         /// <param name="accessKeyId">Access key you can get from Minio's console "Access keys" tab.</param>
         /// <param name="secretAccessKey">Secret key for the access key above</param>
+        /// <param name="region"></param>
         /// <returns></returns>
         public static IAwsS3FileStorage Minio(this IFilesFactory _,
             Uri endpoint,
