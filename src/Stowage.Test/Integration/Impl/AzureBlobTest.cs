@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Config.Net;
@@ -46,6 +47,12 @@ namespace Stowage.Test.Integration.Impl {
             // validate
             content = await _storage.ReadText(path);
             Assert.Equal("onetwo", content);
+        }
+
+        [Fact]
+        public async Task ListContainers_NotEmpty() {
+            IReadOnlyCollection<IOEntry> containers = await _storage.Ls(IOPath.Root);
+            Assert.NotEmpty(containers);
         }
     }
 }

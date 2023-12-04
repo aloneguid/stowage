@@ -86,9 +86,13 @@ namespace Stowage.Impl.Microsoft {
             }
         }
 
-        private static IEnumerable<IOEntry> ConvertContainerBatch(XElement containers) {
+        private static IEnumerable<IOEntry> ConvertContainerBatch(XElement root) {
 
             // https://learn.microsoft.com/en-us/rest/api/storageservices/list-containers2?tabs=microsoft-entra-id#response-body
+
+            XElement? containers = root.Element("Containers");
+            if(containers == null)
+                yield break;
 
             foreach(XElement container in containers.Elements("Container")) {
                 string? name = container.Element("Name")?.Value;
@@ -137,12 +141,17 @@ namespace Stowage.Impl.Microsoft {
 
         private async Task<IReadOnlyCollection<IOEntry>> ListContainersAsync() {
             // write call according to https://learn.microsoft.com/en-us/rest/api/storageservices/list-containers2
-            string url = "?comp=list";
+            string url = "?comp=list&include=metadata,deleted,system";
             HttpResponseMessage response = await SendAsync(new HttpRequestMessage(HttpMethod.Get, url));
-            response.EnsureSuccessStatusCode();
             string rawXml = await response.Content.ReadAsStringAsync();
-            XElement x = XElement.Parse(rawXml);
-            return ConvertContainerBatch(x).ToList();
+
+            if(!response.IsSuccessStatusCode) {
+                if(AzureException.TryCreateFromXml(rawXml, null, out AzureException? ex))
+                    throw ex!;
+                response.EnsureSuccessStatusCode();
+            }
+
+            return ConvertContainerBatch(XElement.Parse(rawXml)).ToList();
         }
 
         private async Task<IReadOnlyCollection<IOEntry>> ListBlobsAsync(
