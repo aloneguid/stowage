@@ -60,11 +60,15 @@ namespace Stowage {
             } else {
                 string[]? parts = Split(path);
 
-                _name = parts.Last();
-                _folderPath = GetParent(path)!;
+                _name = (parts == null || parts.Length == 0) ? RootFolderPath : parts.Last();
+                _folderPath = GetParent(path) ?? RootFolderPath;
             }
         }
 
+        /// <summary>
+        /// Constructs a new instance of <see cref="IOPath"/> from a string path.
+        /// </summary>
+        /// <param name="parts">Parts to use when constructing this path</param>
         public IOPath(params string?[] parts) : this(IOPath.Combine(parts)) {
 
         }

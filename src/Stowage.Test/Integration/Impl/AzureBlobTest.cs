@@ -8,13 +8,14 @@ using Xunit;
 namespace Stowage.Test.Integration.Impl {
     [Trait("Category", "Integration")]
     public class AzureBlobTest {
+        private readonly string _prefix;
         private readonly IAzureBlobFileStorage _storage;
 
         public AzureBlobTest() {
             ITestSettings settings = ConfigLoader.Load();
 
-            _storage = (IAzureBlobFileStorage)Files.Of.AzureBlobStorage(
-               settings.AzureStorageAccount, settings.AzureStorageKey, settings.AzureContainerName);
+            _storage = (IAzureBlobFileStorage)Files.Of.AzureBlobStorage(settings.AzureStorageAccount, settings.AzureStorageKey);
+            _prefix = settings.AzureContainerName + "/";
 
             //_storage = (IAzureBlobFileStorage)Files.Of.AzureBlobStorageWithLocalEmulator(settings.AzureContainerName);
 
@@ -22,7 +23,7 @@ namespace Stowage.Test.Integration.Impl {
 
         [Fact]
         public async Task OpenWrite_Append_LargerAndLarger() {
-            string path = $"/{nameof(OpenWrite_Append_LargerAndLarger)}.txt";
+            string path = $"{_prefix}{nameof(OpenWrite_Append_LargerAndLarger)}.txt";
 
             await _storage.Rm(path);
 
@@ -33,7 +34,7 @@ namespace Stowage.Test.Integration.Impl {
             }
 
             // validate
-            string content = await _storage.ReadText(path);
+            string? content = await _storage.ReadText(path);
             Assert.Equal("one", content);
 
             // write second chunk

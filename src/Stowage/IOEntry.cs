@@ -29,7 +29,7 @@ namespace Stowage {
         /// no information about the hash, or it's very expensive to calculate it, for instance it would require
         /// getting a whole content of the blob to hash it.
         /// </summary>
-        public string MD5 { get; set; }
+        public string? MD5 { get; set; }
 
         /// <summary>
         /// Creation time when known
@@ -50,7 +50,7 @@ namespace Stowage {
         /// Try to get property and cast it to a specified type
         /// </summary>
         public bool TryGetProperty<TValue>(string name, out TValue value, TValue defaultValue = default) {
-            if(name == null || !Properties.TryGetValue(name, out object objValue)) {
+            if(name == null || !Properties.TryGetValue(name, out object? objValue)) {
                 value = defaultValue;
                 return false;
             }

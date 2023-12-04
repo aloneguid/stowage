@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -16,28 +17,18 @@ namespace Stowage.Impl.Microsoft {
 
         // auth with SharedKey - https://docs.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key
 
-        private readonly string _containerName;
-
-        public AzureBlobFileStorage(string accountName, string containerName, DelegatingHandler authHandler)
+        public AzureBlobFileStorage(string accountName, DelegatingHandler authHandler)
            : base(new Uri($"https://{accountName}.blob.core.windows.net/"), authHandler) {
             if(string.IsNullOrEmpty(accountName))
                 throw new ArgumentException($"'{nameof(accountName)}' cannot be null or empty", nameof(accountName));
-            if(string.IsNullOrEmpty(containerName))
-                throw new ArgumentException($"'{nameof(containerName)}' cannot be null or empty", nameof(containerName));
             if(authHandler is null)
                 throw new ArgumentNullException(nameof(authHandler));
-
-            _containerName = containerName;
         }
 
-        public AzureBlobFileStorage(Uri endpoint, string containerName, DelegatingHandler authHandler)
+        public AzureBlobFileStorage(Uri endpoint, DelegatingHandler authHandler)
            : base(EnsureUriEndsWithSlash(endpoint), authHandler) {
-            if(string.IsNullOrEmpty(containerName))
-                throw new ArgumentException($"'{nameof(containerName)}' cannot be null or empty", nameof(containerName));
             if(authHandler is null)
                 throw new ArgumentNullException(nameof(authHandler));
-
-            _containerName = containerName;
         }
 
         private static Uri EnsureUriEndsWithSlash(Uri endpoint)
@@ -45,24 +36,36 @@ namespace Stowage.Impl.Microsoft {
               ? endpoint
               : new Uri($"{endpoint.OriginalString}{IOPath.PathSeparator}");
 
-        public override Task<IReadOnlyCollection<IOEntry>> Ls(IOPath path, bool recurse = false, CancellationToken cancellationToken = default) {
+        public override async Task<IReadOnlyCollection<IOEntry>> Ls(IOPath? path, bool recurse = false, CancellationToken cancellationToken = default) {
             if(path != null && !path.IsFolder)
                 throw new ArgumentException($"{nameof(path)} needs to be a folder", nameof(path));
 
-            return ListAsync(path, recurse, cancellationToken);
+            IReadOnlyCollection<IOEntry> result;
+            if(path == null || path.IsRootPath) {
+                result = await ListContainersAsync();
+            } else {
+                result = await ListBlobsAsync(path, recurse, cancellationToken);
+                path.ExtractPrefixAndRelativePath(out string containerName, out _);
+                PrependContainerName(result, containerName);
+            }
+            return result;
         }
 
-        private static IEnumerable<IOEntry> ConvertBatch(XElement blobs) {
+        private static IEnumerable<IOEntry> ConvertBlobBatch(XElement blobs) {
+            // https://learn.microsoft.com/en-us/rest/api/storageservices/list-blobs
+
             foreach(XElement blobPrefix in blobs.Elements("BlobPrefix")) {
-                string name = blobPrefix.Element("Name").Value;
+                string? name = blobPrefix.Element("Name")?.Value;
                 yield return new IOEntry(name + IOPath.PathSeparatorString);
             }
 
             foreach(XElement blob in blobs.Elements("Blob")) {
-                string name = blob.Element("Name").Value;
+                string? name = blob.Element("Name")?.Value;
+                if(name == null)
+                    continue;
                 var file = new IOEntry(name);
 
-                foreach(XElement xp in blob.Element("Properties").Elements()) {
+                foreach(XElement xp in blob.Element("Properties")?.Elements()) {
                     string pname = xp.Name.ToString();
                     string pvalue = xp.Value;
 
@@ -83,12 +86,43 @@ namespace Stowage.Impl.Microsoft {
             }
         }
 
+        private static IEnumerable<IOEntry> ConvertContainerBatch(XElement containers) {
+
+            // https://learn.microsoft.com/en-us/rest/api/storageservices/list-containers2?tabs=microsoft-entra-id#response-body
+
+            foreach(XElement container in containers.Elements("Container")) {
+                string? name = container.Element("Name")?.Value;
+                if(name == null)
+                    continue;
+                var file = new IOEntry(name);
+
+                IEnumerable<XElement>? properties = container.Element("Properties")?.Elements();
+                if(properties == null)
+                    continue;
+
+                foreach(XElement xp in properties) {
+                    string pname = xp.Name.ToString();
+                    string pvalue = xp.Value;
+
+                    if(!string.IsNullOrEmpty(pvalue)) {
+                        if(pname == "Last-Modified") {
+                            file.LastModificationTime = DateTimeOffset.Parse(pvalue);
+                        } else {
+                            file.Properties[pname] = pvalue;
+                        }
+                    }
+                }
+
+                yield return file;
+            }
+        }
+
         // see https://docs.microsoft.com/en-us/rest/api/storageservices/list-blobs
-        private async Task<string> ListAsync(string containerName,
-           string prefix = null,
-           string delimiter = null,
-           string include = "metadata") {
-            string url = $"{containerName}?restype=container&comp=list&include={include}";
+        private async Task<string> ListBlobsAsync(IOPath path,
+            string? prefix = null,
+            string? delimiter = null,
+            string include = "metadata") {
+            string url = $"{path.NLS}?restype=container&comp=list&include={include}";
 
             if(prefix != null)
                 url += "&prefix=" + prefix;
@@ -101,29 +135,39 @@ namespace Stowage.Impl.Microsoft {
             return await response.Content.ReadAsStringAsync();
         }
 
-        private async Task<IReadOnlyCollection<IOEntry>> ListAsync(
-           string path, bool recurse,
+        private async Task<IReadOnlyCollection<IOEntry>> ListContainersAsync() {
+            // write call according to https://learn.microsoft.com/en-us/rest/api/storageservices/list-containers2
+            string url = "?comp=list";
+            HttpResponseMessage response = await SendAsync(new HttpRequestMessage(HttpMethod.Get, url));
+            response.EnsureSuccessStatusCode();
+            string rawXml = await response.Content.ReadAsStringAsync();
+            XElement x = XElement.Parse(rawXml);
+            return ConvertContainerBatch(x).ToList();
+        }
+
+        private async Task<IReadOnlyCollection<IOEntry>> ListBlobsAsync(
+           IOPath path, bool recurse,
            CancellationToken cancellationToken) {
             var result = new List<IOEntry>();
 
             // maxResults default is 5'000
 
-            string prefix = GetPathInContainer(path);
+            path.ExtractPrefixAndRelativePath(out string containerName, out IOPath prefix);
 
-            string rawXml = await ListAsync(GetContainerName(path),
-               IOPath.IsRoot(prefix) ? null : (prefix.Trim('/') + "/"),
+            string rawXml = await ListBlobsAsync(containerName,
+                prefix.IsRootPath ? null : prefix.Full.Trim('/') + "/",
                delimiter: recurse ? null : "/");
 
-            var x = XElement.Parse(rawXml);
-            XElement blobs = x.Element("Blobs");
+            XElement x = XElement.Parse(rawXml);
+            XElement? blobs = x.Element("Blobs");
             if(blobs != null) {
-                result.AddRange(ConvertBatch(blobs));
+                result.AddRange(ConvertBlobBatch(blobs));
             }
 
-            XElement nextMarker = x.Element("NextMarker");
+            XElement? nextMarker = x.Element("NextMarker");
 
             if(recurse) {
-                Implicits.AssumeImplicitFolders(path, result);
+                Implicits.AssumeImplicitFolders(prefix, result);
             }
 
             return result;
@@ -142,35 +186,35 @@ namespace Stowage.Impl.Microsoft {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
 
-            return Task.FromResult<Stream>(new AzureWriteStream(this, GetContainerName(path), GetPathInContainer(path), append));
+            return Task.FromResult<Stream>(new AzureWriteStream(this, path, append));
         }
 
-        private HttpRequestMessage CreatePutBlockRequest(int blockId, string containerName, string blobName, byte[] buffer, int count, out string blockIdStr) {
+        private HttpRequestMessage CreatePutBlockRequest(int blockId, IOPath path, byte[] buffer, int count, out string blockIdStr) {
             blockIdStr = Convert.ToBase64String(Encoding.ASCII.GetBytes(blockId.ToString("d6")));
 
             // call https://docs.microsoft.com/en-us/rest/api/storageservices/put-block
-            var request = new HttpRequestMessage(HttpMethod.Put, $"{containerName}/{blobName}?comp=block&blockid={blockIdStr}");
+            var request = new HttpRequestMessage(HttpMethod.Put, $"{path.NLS}?comp=block&blockid={blockIdStr}");
             request.Content = new ByteArrayContent(buffer, 0, count);
             return request;
         }
 
-        private HttpRequestMessage CreateAppendBlockRequest(string containerName, string blobName, byte[] buffer, int count) {
+        private HttpRequestMessage CreateAppendBlockRequest(IOPath path, byte[] buffer, int count) {
             // call https://docs.microsoft.com/en-us/rest/api/storageservices/append-block
-            var request = new HttpRequestMessage(HttpMethod.Put, $"{containerName}/{blobName}?comp=appendblock");
+            var request = new HttpRequestMessage(HttpMethod.Put, $"{path.NLS}?comp=appendblock");
             request.Content = new ByteArrayContent(buffer, 0, count);
             return request;
         }
 
-        public string PutBlock(int blockId, string containerName, string blobName, byte[] buffer, int count) {
-            HttpRequestMessage request = CreatePutBlockRequest(blockId, containerName, blobName, buffer, count, out string blockIdStr);
+        public string PutBlock(int blockId, IOPath path, byte[] buffer, int count) {
+            HttpRequestMessage request = CreatePutBlockRequest(blockId, path, buffer, count, out string blockIdStr);
             HttpResponseMessage response = Send(request);
             response.EnsureSuccessStatusCode();
             return blockIdStr;
         }
 
 
-        public void AppendBlock(string containerName, string blobName, byte[] buffer, int count) {
-            HttpRequestMessage request = CreateAppendBlockRequest(containerName, blobName, buffer, count);
+        public void AppendBlock(IOPath path, byte[] buffer, int count) {
+            HttpRequestMessage request = CreateAppendBlockRequest(path, buffer, count);
             HttpResponseMessage response = Send(request);
             if(response.StatusCode == HttpStatusCode.NotFound)
                 throw new FileNotFoundException();
@@ -182,22 +226,22 @@ namespace Stowage.Impl.Microsoft {
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task<string> PutBlockAsync(int blockId, string containerName, string blobName, byte[] buffer, int count) {
-            HttpRequestMessage request = CreatePutBlockRequest(blockId, containerName, blobName, buffer, count, out string blockIdStr);
+        public async Task<string> PutBlockAsync(int blockId, IOPath path, byte[] buffer, int count) {
+            HttpRequestMessage request = CreatePutBlockRequest(blockId, path, buffer, count, out string blockIdStr);
             HttpResponseMessage response = await SendAsync(request);
             response.EnsureSuccessStatusCode();
             return blockIdStr;
         }
 
-        public async Task AppendBlockAsync(string containerName, string blobName, byte[] buffer, int count) {
-            HttpRequestMessage request = CreateAppendBlockRequest(containerName, blobName, buffer, count);
+        public async Task AppendBlockAsync(IOPath path, byte[] buffer, int count) {
+            HttpRequestMessage request = CreateAppendBlockRequest(path, buffer, count);
             HttpResponseMessage response = await SendAsync(request);
             if(response.StatusCode == HttpStatusCode.NotFound)
                 throw new FileNotFoundException();
             response.EnsureSuccessStatusCode();
         }
 
-        private HttpRequestMessage CreatePutBlockListRequest(string containerName, string blobName, IEnumerable<string> blockIds) {
+        private HttpRequestMessage CreatePutBlockListRequest(IOPath path, IEnumerable<string> blockIds) {
             /* sample body
                Request Body:  
                <?xml version="1.0" encoding="utf-8"?>  
@@ -214,48 +258,39 @@ namespace Stowage.Impl.Microsoft {
             sb.Append("</BlockList>");
 
             // call https://docs.microsoft.com/en-us/rest/api/storageservices/put-block-list
-            var request = new HttpRequestMessage(HttpMethod.Put, $"{containerName}/{blobName}?comp=blocklist");
+            var request = new HttpRequestMessage(HttpMethod.Put, $"{path.NLS}?comp=blocklist");
             request.Content = new StringContent(sb.ToString());
             return request;
         }
 
-        public void PutBlockList(string containerName, string blobName, IEnumerable<string> blockIds) {
-            HttpResponseMessage response = Send(CreatePutBlockListRequest(containerName, blobName, blockIds));
+        public void PutBlockList(IOPath path, IEnumerable<string> blockIds) {
+            HttpResponseMessage response = Send(CreatePutBlockListRequest(path, blockIds));
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task PutBlockListAsync(string containerName, string blobName, IEnumerable<string> blockIds) {
-            HttpResponseMessage response = await SendAsync(CreatePutBlockListRequest(containerName, blobName, blockIds));
+        public async Task PutBlockListAsync(IOPath path, IEnumerable<string> blockIds) {
+            HttpResponseMessage response = await SendAsync(CreatePutBlockListRequest(path, blockIds));
             response.EnsureSuccessStatusCode();
         }
 
-        private HttpRequestMessage CreatePutBlobRequest(string containerName, string blobName, string blobType) {
+        private HttpRequestMessage CreatePutBlobRequest(IOPath path, string blobType) {
             // https://docs.microsoft.com/en-us/rest/api/storageservices/put-blob
 
-            var request = new HttpRequestMessage(HttpMethod.Put, $"{containerName}/{blobName}");
+            var request = new HttpRequestMessage(HttpMethod.Put, path.NLS);
             request.Content = new ByteArrayContent(new byte[0]);  // sets Content-Type to 0
             request.Headers.Add("x-ms-blob-type", blobType);
             return request;
         }
 
 
-        public async Task PutBlobAsync(string containerName, string blobName, string blobType = "BlockBlob") {
-            HttpResponseMessage response = await SendAsync(CreatePutBlobRequest(containerName, blobName, blobType));
+        public async Task PutBlobAsync(IOPath path, string blobType = "BlockBlob") {
+            HttpResponseMessage response = await SendAsync(CreatePutBlobRequest(path, blobType));
             response.EnsureSuccessStatusCode();
         }
 
-        public void PutBlob(string containerName, string blobName, string blobType = "BlockBlob") {
-            HttpResponseMessage response = Send(CreatePutBlobRequest(containerName, blobName, blobType));
+        public void PutBlob(IOPath path, string blobType = "BlockBlob") {
+            HttpResponseMessage response = Send(CreatePutBlobRequest(path, blobType));
             response.EnsureSuccessStatusCode();
-        }
-
-        //todo: remove both, as we're scoped to containers
-        private string GetContainerName(string path) {
-            return _containerName ?? path.Split(IOPath.PathSeparatorChar, 2)[0];
-        }
-
-        private string GetPathInContainer(string path) {
-            return IOPath.Normalize(_containerName == null ? IOPath.RemoveRoot(path) : path, true);
         }
 
         public override async Task<Stream?> OpenRead(IOPath path, CancellationToken cancellationToken = default) {
@@ -263,7 +298,7 @@ namespace Stowage.Impl.Microsoft {
                 throw new ArgumentNullException(nameof(path));
 
             // call https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{GetContainerName(path)}/{GetPathInContainer(path)}");
+            var request = new HttpRequestMessage(HttpMethod.Get, path.NLS);
             HttpResponseMessage response = await SendAsync(request);
 
             if(response.StatusCode == HttpStatusCode.NotFound)
@@ -272,11 +307,6 @@ namespace Stowage.Impl.Microsoft {
             response.EnsureSuccessStatusCode();
 
             return await response.Content.ReadAsStreamAsync();
-
-
-            //ApiResponse<Stream> response = await _api.GetBlob(GetContainerName(path), GetPathInContainer(path));
-
-            //return response.Content;
         }
 
         public override async Task Rm(IOPath path, CancellationToken cancellationToken = default) {
@@ -287,13 +317,80 @@ namespace Stowage.Impl.Microsoft {
                 await RmRecurseWithLs(path, cancellationToken);
             } else {
                 // https://docs.microsoft.com/en-us/rest/api/storageservices/delete-blob
-                HttpResponseMessage response = await SendAsync(new HttpRequestMessage(HttpMethod.Delete, $"{_containerName}{path}"));
+                HttpResponseMessage response = await SendAsync(new HttpRequestMessage(HttpMethod.Delete, path));
                 if(response.StatusCode != HttpStatusCode.NotFound) {
                     response.EnsureSuccessStatusCode();
                 }
             }
         }
 
-        public override Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public override async Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default) {
+            if(path is null)
+                throw new ArgumentNullException(nameof(path));
+
+            // call https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob
+            var request = new HttpRequestMessage(HttpMethod.Head, path.NLS);
+            HttpResponseMessage response = await SendAsync(request);
+
+            if(response.StatusCode == HttpStatusCode.NotFound)
+                return null;
+
+            response.EnsureSuccessStatusCode();
+
+            // response does not have a body:
+            // https://learn.microsoft.com/en-us/rest/api/storageservices/get-blob-properties?tabs=microsoft-entra-id#response
+
+            string? creationTime = response.GetHeaderValue("x-ms-creation-time");
+
+
+            // todo:
+            // - x-ms-meta-name:value
+            // - x-ms-tag-count
+            //
+
+            var e = new IOEntry(path) {
+                CreatedTime = creationTime == null ? null : DateTimeOffset.Parse(creationTime),
+                LastModificationTime = response.Content.Headers.LastModified,
+                Size = response.Content.Headers.ContentLength,
+                MD5 = response.Content.Headers.ContentMD5.ToHexString() ?? string.Empty
+            };
+
+            e.TryAddProperties(
+                "BlobType", response.GetHeaderValue("x-ms-blob-type"),
+                "LeaseState", response.GetHeaderValue("x-ms-lease-state"),
+                "LeaseDuration", response.GetHeaderValue("x-ms-lease-duration"),
+                "ContentType", response.Content.Headers.ContentType,
+                "ETag", response.Headers.ETag,
+                "ContentEncoding", response.Content.Headers.ContentEncoding,
+                "ContentLanguage", response.Content.Headers.ContentLanguage,
+                "ContentDisposition", response.Content.Headers.ContentDisposition,
+                "CacheControl", response.Headers.CacheControl,
+                "ServerEncrypted", response.GetHeaderValue("x-ms-server-encrypted"),
+                "EncryptionKeySha256", response.GetHeaderValue("x-ms-encryption-key-sha256"),
+                "EncryptionContext", response.GetHeaderValue("x-ms-encryption-context"),
+                "EncryptionScope", response.GetHeaderValue("x-ms-encryption-scope"),
+                "AccessTier", response.GetHeaderValue("x-ms-access-tier"),
+                "AccessTierChangeTime", response.GetHeaderValue("x-ms-access-tier-change-time"),
+                "ArchiveStatus", response.GetHeaderValue("x-ms-archive-status"),
+                "RehydratePriority", response.GetHeaderValue("x-ms-rehydrate-priority"),
+                "LastAccessTime", response.GetHeaderValue("x-ms-last-access-time"),
+                "LegalHold", response.GetHeaderValue("x-ms-legal-hold"),
+                "Owner", response.GetHeaderValue("x-ms-owner"),
+                "Group", response.GetHeaderValue("x-ms-group"),
+                "Permissions", response.GetHeaderValue("x-ms-permissions"),
+                "ResourceType", response.GetHeaderValue("x-ms-resource-type"),
+                "Snapshot", response.GetHeaderValue("x-ms-snapshot"),
+                "VersionId", response.GetHeaderValue("x-ms-version-id"),
+                "ExpiryTime", response.GetHeaderValue("x-ms-expiry-time"));
+
+            return e;
+        }
+
+        private static void PrependContainerName(IReadOnlyCollection<IOEntry> entries, string containerName) {
+            foreach(IOEntry entry in entries) {
+                entry.Path = entry.Path.Prefix(containerName)!;
+            }
+        }
+
     }
 }

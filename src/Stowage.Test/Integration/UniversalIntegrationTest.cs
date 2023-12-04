@@ -46,7 +46,8 @@ namespace Stowage.Test.Integration {
         public UniversalIntegrationTest(string name) {
             switch(name) {
                 case "AzureBlob":
-                    _storage = Files.Of.AzureBlobStorage(settings.AzureStorageAccount, settings.AzureStorageKey, settings.AzureContainerName);
+                    _storage = Files.Of.AzureBlobStorage(settings.AzureStorageAccount, settings.AzureStorageKey);
+                    _pathPrefix = "/" + settings.AzureContainerName + "/";
                     break;
                 //case "AzureTable":
                 //   storage = Files.Of.AzureTableStorage(settings.AzureStorageAccount, settings.AzureStorageKey);
@@ -415,9 +416,9 @@ namespace Stowage.Test.Integration {
 
         [Fact]
         public async Task Exists_Exists_True() {
-            string path1 = await GetRandomStreamIdAsync();
+            string path = await GetRandomStreamIdAsync();
 
-            Assert.True(await _storage.Exists(path1));
+            Assert.True(await _storage.Exists(path));
         }
 
         [Fact]

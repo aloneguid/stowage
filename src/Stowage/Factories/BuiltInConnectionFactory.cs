@@ -20,11 +20,10 @@ namespace Stowage.Factories {
 
             if(connectionString.Prefix == "az") {
                 connectionString.GetRequired(KnownParameter.AccountName, true, out string accountName);
-                connectionString.GetRequired(KnownParameter.BucketName, true, out string containerName);
 
                 string? sharedKey = connectionString.Get(KnownParameter.KeyOrPassword);
                 if(!string.IsNullOrEmpty(sharedKey)) {
-                    return new AzureBlobFileStorage(accountName, containerName, new SharedKeyAuthHandler(accountName, sharedKey));
+                    return new AzureBlobFileStorage(accountName, new SharedKeyAuthHandler(accountName, sharedKey));
                 }
             }
 

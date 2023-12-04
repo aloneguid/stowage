@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 
@@ -30,7 +31,11 @@ namespace Stowage {
             if(!response.Headers.TryGetValues(headerName, out IEnumerable<string>? values))
                 return null;
 
-            return string.Join(",", values);
+            var vl = values.ToList();
+            if(vl.Count == 0)
+                return null;
+
+            return string.Join(",", vl);
         }
     }
 }

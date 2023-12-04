@@ -80,18 +80,28 @@ namespace Stowage.Impl {
             return Task.FromResult<Stream>(new DataStream(path, this));
         }
 
-        public override Task<Stream> OpenRead(IOPath path, CancellationToken cancellationToken = default) {
+        public override Task<Stream?> OpenRead(IOPath path, CancellationToken cancellationToken = default) {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
 
 
             if(!_pathToTag.TryGetValue(path, out Tag tag) || tag.data == null)
-                return Task.FromResult<Stream>(null);
+                return Task.FromResult<Stream?>(null);
 
             tag.data.Position = 0;
-            return Task.FromResult<Stream>(tag.data);
+            return Task.FromResult<Stream?>(tag.data);
         }
 
+        public override Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default) {
+            if(path is null)
+                throw new ArgumentNullException(nameof(path));
+
+
+            if(!_pathToTag.TryGetValue(path, out Tag tag))
+                return Task.FromResult<IOEntry?>(null);
+
+            return Task.FromResult<IOEntry?>(tag.entry);
+        }
 
         public override Task Rm(IOPath path, CancellationToken cancellationToken = default) {
             if(path is null)
@@ -153,6 +163,6 @@ namespace Stowage.Impl {
             return _pathToTag.ContainsKey(fullPath);
         }
 
-        public override Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
     }
 }

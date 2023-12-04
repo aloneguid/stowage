@@ -2,6 +2,20 @@
 
 namespace Stowage.Test {
     public class IOPathTest {
+
+        [Theory]
+        [InlineData(null, "/")]
+        [InlineData("", "/")]
+        [InlineData("/", "/")]
+        [InlineData("//", "/")]
+        [InlineData("/one", "/one")]
+        [InlineData("/one/", "/one/")]
+        [InlineData("one", "/one")]
+        public void Constructor_theory(string input, string expected) {
+            Assert.Equal(expected, new IOPath(input).Full);
+        }
+
+
         [Theory]
         [InlineData("/dev/one", new[] { "dev", "one" })]
         [InlineData("/one/two/three", new[] { "one", "two", "three" })]
