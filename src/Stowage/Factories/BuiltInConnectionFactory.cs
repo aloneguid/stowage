@@ -35,10 +35,23 @@ namespace Stowage.Factories {
             }
 
             if(connectionString.Prefix == "s3") {
-                connectionString.GetRequired(KnownParameter.AwsProfile, true, out string profileName);
-                string? region = connectionString.Get(KnownParameter.Region);
 
-                return Files.Of.AmazonS3FromCliProfile(profileName, region);
+                // using CLI profile
+                string? cliProfile = connectionString.Get(KnownParameter.AwsProfile);
+                if(!string.IsNullOrEmpty(cliProfile)) {
+                    string? region = connectionString.Get(KnownParameter.Region);
+                    return Files.Of.AmazonS3FromCliProfile(cliProfile, region);
+                }
+
+                // using long-term credentials
+                string? accessKey = connectionString.Get(KnownParameter.KeyId);
+                if(!string.IsNullOrEmpty(accessKey)) {
+                    connectionString.GetRequired(KnownParameter.KeyOrPassword, true, out string secretKey);
+                    string? region = connectionString.Get(KnownParameter.Region);
+                    return Files.Of.AmazonS3(accessKey, secretKey, region);
+                }
+
+                return null;
             }
 
             return null;

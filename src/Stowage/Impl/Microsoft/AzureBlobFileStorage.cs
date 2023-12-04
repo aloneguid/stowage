@@ -98,7 +98,7 @@ namespace Stowage.Impl.Microsoft {
                 string? name = container.Element("Name")?.Value;
                 if(name == null)
                     continue;
-                var file = new IOEntry(name);
+                var file = new IOEntry(name + IOPath.PathSeparatorString);
 
                 IEnumerable<XElement>? properties = container.Element("Properties")?.Elements();
                 if(properties == null)

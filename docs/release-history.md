@@ -14,6 +14,16 @@ Since v2: `/bucket/directory/object`.
 
 This syntax makes accessing multiple buckets more ergonomic. In addition to that, `Ls` operation on root folder simply returns the list of buckets.
 
+#### Breaking change for Azure Storage users
+
+In azure storage, URL now must start with container name. 
+
+Before v2: `/directory/object`.
+
+Since v2: `/container/directory/object`.
+
+`Ls` operation on root folder simply returns the list of containers.
+
 #### Other new features
 
 - **breaking:** `Rm` operation now has no `recurse` flag. Passing a file deletes a file, passing a folder deletes the folder recursively. It's just magic.
@@ -23,6 +33,7 @@ This syntax makes accessing multiple buckets more ergonomic. In addition to that
 
 - AWS CLI configuration parser also picks up default region from `~/.aws/config` file.
 - S3 error messages are improved, taking response message from http api response.
+- Azure storage provider protocol upgraded to `2020-10-02`.
 - Enabled [nullable reference types](https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references) and fixed a lot of null checks.
 
 ### Bugs fixed
