@@ -1,10 +1,7 @@
-﻿# Stowage
+﻿# Stowage [![Nuget](https://img.shields.io/nuget/v/Stowage?style=for-the-badge)](https://www.nuget.org/packages/Stowage)
 
-[![Nuget](https://img.shields.io/nuget/v/Stowage?style=for-the-badge&label=stable)](https://www.nuget.org/packages/Stowage) [![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Stowage?style=for-the-badge&label=pre-release)](https://www.nuget.org/packages/Stowage) [![Nuget](https://img.shields.io/nuget/dt/Stowage?style=for-the-badge)](https://www.nuget.org/stats/packages/Stowage?groupby=Version)
 
-![logo](../media/icon/icon-256.png)
-
-> This documentation is for Stowage v2 which is currently in the pre-release stage. Version 1 documentation can be found [here](README.v1.md).
+![](../media/icon/icon-256.png)
 
 **Stowage** is a **bloat-free .NET cloud storage kit** that supports at minimum THE major ☁ providers.
 
@@ -116,80 +113,6 @@ There are other useful utility methods:
 
 Instantiation instructions are in the code documentation ([IntelliSense](https://docs.microsoft.com/en-us/visualstudio/ide/using-intellisense?view=vs-2019)?) - I prefer this to writing out here locally.
 
-Below are some details worth mentioning.
-
-### AWS S3
-
-In AWS, the path addressing style is the following:
-
-```
-/bucket/path/object
-```
-
-`Ls` on the root folder returns *list of buckets* in the AWS account, whether you do have access to them or not.
-
-#### Authentication
-
- The most usual way to authenticate with S3 is to use the following method:
-
-```csharp
-IFileStorage storage = Files.Of.AmazonS3(key, secret, region);
-```
-
-These are what Amazon calls "long-term" credentials. If you are using STS, the same method overload allows you to pass `sessionToken`.
-
-Another way to authenticate is using CLI profile. This is useful when you machine is already authenticated using [aws cli](https://aws.amazon.com/cli/), [awsume](https://awsu.me/) or similar tools that write credentials and configuration to `~/.aws/credentials` and `~/.aws/config`. 
-
-You only need to pass the profile name (and only if it's not a default one):
-
-```csharp
-IFileStorage storage = Files.Of.AmazonS3FromCliProfile();
-```
-
-This method has other default parameters, such as `regionName` which can be specified or overridden if not found in CLI configuration.
-
-##### Minio
-
-Minio is essentially using the standard S3 protocol, but addressing style is slightly different. There is a helper extension that somewhat simplifies Minio authentication:
-
-```csharp
-IFileStorage storage = Files.Of.Minio(endpoint, key, secret);
-```
-
-### Azure Blob Storage
-
-In Azure Blob Storage, path addressing style is the following:
-
-```
-/container/path/object
-```
-
-Note that there is no storage account in the path, mostly because *Shared Key authentication is storage account scoped*, not tenant scoped.
-
-`Ls` on the root folder returns *list of containers* in the storage account.
-
-#### Authentication
-
-Azure provider supports authentication with [Shared Key](https://docs.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key):
-
-```csharp
-IFileStorage storage = Files.Of.AzureBlobStorage(accountName, sharedKey);
-```
-
-Since v2, authentication with Entra Id service principals is supported too:
-
-```csharp
-IFileStorage storage = Files.Of.AzureBlobStorage(
-    accountName,
-    new ClientSecretCredential(tenantId, clientId, clientSecret));
-```
-
-Interactive authentication with user credentials, and managed identities are not yet supported, but watch this space.
-
-#### Emulator
-
-Azure emulator is supported, just use `AzureBlobStorageWithLocalEmulator()` method to connect to it.
-
 ## 📈 Extending
 
 There are many ways to extend functionality:
@@ -221,4 +144,4 @@ I'm a strong advocate of simplicity and not going to repeat the mistake of turni
 
 ## 💰 Contributing
 
-You are welcome to contribute in any form, however I wouldn't bother, especially financially. Don't bother buying me a ☕, I can do it myself real cheap. During my years of OSS development everyone I know (including myself) have only lost money. Why I'm still doing this? Probably because *it's just cool and I'm enjoying it*.
+You are welcome to contribute in any form, however I wouldn't bother, especially financially. Don't bother buying me a ☕, I can do it myself real cheap during COVID! Why? During my years of OSS development everyone I know (including myself) have only lost money. Why I'm still doing this? Probably because *it's just cool and I'm enjoying it*.

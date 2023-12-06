@@ -5,9 +5,23 @@ namespace Stowage.Test {
 
         string AzureStorageAccount { get; }
 
+        string AzureContainerName { get; }
+
+        #region [ Azure Shared Access Key Auth ]
+
         string AzureStorageKey { get; }
 
-        string AzureContainerName { get; }
+        #endregion
+
+        #region [ Azure Entra Id Auth ]
+
+        string AzureTenantId { get; }
+
+        string AzureClientId { get; }
+
+        string AzureClientSecret { get; }
+
+        #endregion
 
         string AwsBucket { get; }
 

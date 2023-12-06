@@ -2,24 +2,21 @@
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Config.Net;
 using Stowage.Impl.Microsoft;
 using Xunit;
 
 namespace Stowage.Test.Integration.Impl {
     [Trait("Category", "Integration")]
     public class AzureBlobTest {
+        private readonly ITestSettings _settings;
         private readonly string _prefix;
         private readonly IAzureBlobFileStorage _storage;
 
         public AzureBlobTest() {
-            ITestSettings settings = ConfigLoader.Load();
+            _settings = ConfigLoader.Load();
 
-            _storage = (IAzureBlobFileStorage)Files.Of.AzureBlobStorage(settings.AzureStorageAccount, settings.AzureStorageKey);
-            _prefix = settings.AzureContainerName + "/";
-
-            //_storage = (IAzureBlobFileStorage)Files.Of.AzureBlobStorageWithLocalEmulator(settings.AzureContainerName);
-
+            _storage = (IAzureBlobFileStorage)Files.Of.AzureBlobStorage(_settings.AzureStorageAccount, _settings.AzureStorageKey);
+            _prefix = _settings.AzureContainerName + "/";
         }
 
         [Fact]
@@ -53,6 +50,15 @@ namespace Stowage.Test.Integration.Impl {
         public async Task ListContainers_NotEmpty() {
             IReadOnlyCollection<IOEntry> containers = await _storage.Ls(IOPath.Root);
             Assert.NotEmpty(containers);
+        }
+
+        [Fact]
+        public async Task Auth_ClientCredentials() {
+            IFileStorage storage = Files.Of.AzureBlobStorage(
+                _settings.AzureStorageAccount,
+                new ClientSecretCredential(_settings.AzureTenantId, _settings.AzureClientId, _settings.AzureClientSecret));
+
+            await storage.Ls();
         }
     }
 }

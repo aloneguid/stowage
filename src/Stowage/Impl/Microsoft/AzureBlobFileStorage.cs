@@ -51,41 +51,6 @@ namespace Stowage.Impl.Microsoft {
             return result;
         }
 
-        private static IEnumerable<IOEntry> ConvertBlobBatch(XElement blobs) {
-            // https://learn.microsoft.com/en-us/rest/api/storageservices/list-blobs
-
-            foreach(XElement blobPrefix in blobs.Elements("BlobPrefix")) {
-                string? name = blobPrefix.Element("Name")?.Value;
-                yield return new IOEntry(name + IOPath.PathSeparatorString);
-            }
-
-            foreach(XElement blob in blobs.Elements("Blob")) {
-                string? name = blob.Element("Name")?.Value;
-                if(name == null)
-                    continue;
-                var file = new IOEntry(name);
-
-                foreach(XElement xp in blob.Element("Properties")?.Elements()) {
-                    string pname = xp.Name.ToString();
-                    string pvalue = xp.Value;
-
-                    if(!string.IsNullOrEmpty(pvalue)) {
-                        if(pname == "Last-Modified") {
-                            file.LastModificationTime = DateTimeOffset.Parse(pvalue);
-                        } else if(pname == "Content-Length") {
-                            file.Size = long.Parse(pvalue);
-                        } else if(pname == "Content-MD5") {
-                            file.MD5 = pvalue;
-                        } else {
-                            file.Properties[pname] = pvalue;
-                        }
-                    }
-                }
-
-                yield return file;
-            }
-        }
-
         private static IEnumerable<IOEntry> ConvertContainerBatch(XElement root) {
 
             // https://learn.microsoft.com/en-us/rest/api/storageservices/list-containers2?tabs=microsoft-entra-id#response-body
@@ -166,14 +131,6 @@ namespace Stowage.Impl.Microsoft {
             string rawXml = await ListBlobsAsync(containerName,
                 prefix.IsRootPath ? null : prefix.Full.Trim('/') + "/",
                delimiter: recurse ? null : "/");
-
-            XElement x = XElement.Parse(rawXml);
-            XElement? blobs = x.Element("Blobs");
-            if(blobs != null) {
-                result.AddRange(ConvertBlobBatch(blobs));
-            }
-
-            XElement? nextMarker = x.Element("NextMarker");
 
             if(recurse) {
                 Implicits.AssumeImplicitFolders(prefix, result);

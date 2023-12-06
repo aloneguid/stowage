@@ -16,7 +16,6 @@ namespace Stowage.Impl.Microsoft {
     /// Note that for table service there are slight differences: https://docs.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key#table-service-shared-key-authorization
     /// </summary>
     internal class SharedKeyAuthHandler : DelegatingHandler {
-        private const string ServiceVersion = "2020-10-02";
         private const string ODataVersion = "3.0"; // https://docs.microsoft.com/en-us/rest/api/storageservices/setting-the-odata-data-service-version-headers
         private readonly string _accountName;
         private readonly string _sharedKey;
@@ -48,7 +47,7 @@ namespace Stowage.Impl.Microsoft {
             DateTime now = DateTime.UtcNow;
             string nowHeader = now.ToString("R", CultureInfo.InvariantCulture);
             request.Headers.Add("x-ms-date", nowHeader);
-            request.Headers.Add("x-ms-version", ServiceVersion);
+            request.Headers.Add("x-ms-version", Azure.ServiceVersion);
 
             string signature;
 

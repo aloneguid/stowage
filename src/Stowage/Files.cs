@@ -111,14 +111,38 @@ namespace Stowage {
             return new VirtualStorage();
         }
 
+        /// <summary>
+        /// Create Azure Blob Storage connection with Shared Key authentication
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="accountName"></param>
+        /// <param name="sharedKey"></param>
+        /// <returns></returns>
         public static IFileStorage AzureBlobStorage(this IFilesFactory _, string accountName, string sharedKey) {
             return new AzureBlobFileStorage(accountName, new SharedKeyAuthHandler(accountName, sharedKey));
         }
 
+        /// <summary>
+        /// Create Azure Blob Storage connection with Shared Key authentication and custom endpoint.
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="endpoint"></param>
+        /// <param name="accountName"></param>
+        /// <param name="sharedKey"></param>
+        /// <returns></returns>
         public static IFileStorage AzureBlobStorage(this IFilesFactory _, Uri endpoint, string accountName, string sharedKey) {
             return new AzureBlobFileStorage(endpoint, new SharedKeyAuthHandler(accountName, sharedKey));
         }
 
+        public static IFileStorage AzureBlobStorage(this IFilesFactory _, string accountName, ClientSecretCredential clientSecretCredential) {
+            return new AzureBlobFileStorage(accountName, new EntraIdAuthHandler(clientSecretCredential));
+        }
+
+        /// <summary>
+        /// Creates a connection to Azure Blob Storage local emulator.
+        /// </summary>
+        /// <param name="_"></param>
+        /// <returns></returns>
         public static IFileStorage AzureBlobStorageWithLocalEmulator(this IFilesFactory _) {
             const string accountName = "devstoreaccount1";
             const string sharedKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";

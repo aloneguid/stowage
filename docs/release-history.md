@@ -1,6 +1,6 @@
 ﻿## 2.0.0
 
-2.0.0 introduces massive *ergonomic improvements* and breaking changes.
+2.0.0 introduces massive *ergonomic improvements* and some breaking changes.
 
 ### New features
 
@@ -26,8 +26,9 @@ Since v2: `/container/directory/object`.
 
 #### Other new features
 
-- **breaking:** `Rm` operation now has no `recurse` flag. Passing a file deletes a file, passing a folder deletes the folder recursively. It's just magic.
+- **breaking:** `Rm` operation now has no `recurse` flag. Passing a file deletes a file, passing a folder deletes the folder recursively. It should have been as easy as that, not sure why that flag was there in the first place!
 - New operation `Stat` retrieves object information without downloading it.
+- Azure Blob storage supports new authentication type - with Entra Id Service Principals.
 
 ### Improvements
 
