@@ -27,19 +27,22 @@ Since v2: `/container/directory/object`.
 #### Other new features
 
 - **breaking:** `Rm` operation now has no `recurse` flag. Passing a file deletes a file, passing a folder deletes the folder recursively. It should have been as easy as that, not sure why that flag was there in the first place!
+- **breaking**: .NET Core support is dropped. The minimum supported framework is now .NET 5.
 - New operation `Stat` retrieves object information without downloading it.
 - Azure Blob storage supports new authentication type - with Entra Id Service Principals.
 
 ### Improvements
 
 - AWS CLI configuration parser also picks up default region from `~/.aws/config` file.
-- S3 error messages are improved, taking response message from http api response.
+- S3 error messages are improved, taking response message from HTTP API response.
+- S3 accepts *session token* when authenticating, allowing you to use credentials from AWS STS.
 - Azure storage provider protocol upgraded to `2020-10-02`.
 - Enabled [nullable reference types](https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references) and fixed a lot of null checks.
 
 ### Bugs fixed
 
 - AWS `Rm` on folders was not deleting recursively.
+- Azure `Ls` command did not return more than 5k items.
 
 ## 1.5.1
 

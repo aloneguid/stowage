@@ -43,14 +43,15 @@ namespace Stowage.Impl.Microsoft {
             }
         }
 
-        public static void ParseBlobListResponse(string rawXml, List<IOEntry> result) {
+        public static void ParseBlobListResponse(string rawXml, List<IOEntry> result, out string? nextMarker) {
             XElement x = XElement.Parse(rawXml);
             XElement? blobs = x.Element("Blobs");
             if(blobs != null) {
                 result.AddRange(ConvertBlobBatch(blobs));
             }
-
-            XElement? nextMarker = x.Element("NextMarker");
+            nextMarker = x.Element("NextMarker")?.Value;
+            if(string.IsNullOrEmpty(nextMarker))
+                nextMarker = null;
         }
     }
 }

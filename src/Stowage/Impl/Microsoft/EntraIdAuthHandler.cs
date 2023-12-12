@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace Stowage.Impl.Microsoft {
 
+    /// <summary>
+    /// Client credential
+    /// </summary>
     public class ClientSecretCredential {
 
         public ClientSecretCredential(string tenantId, string clientId, string clientSecret) {
@@ -17,10 +20,19 @@ namespace Stowage.Impl.Microsoft {
             ClientSecret = clientSecret;
         }
 
+        /// <summary>
+        /// Tenant id. Usually looks like a GUID.
+        /// </summary>
         public string TenantId { get; init; }
 
+        /// <summary>
+        /// Client id
+        /// </summary>
         public string ClientId { get; init; }
 
+        /// <summary>
+        /// Client secret
+        /// </summary>
         public string ClientSecret { get; init; }
     }
 
@@ -33,14 +45,20 @@ namespace Stowage.Impl.Microsoft {
         private TokenResponse? _token;
 
         class TokenResponse {
+            /// <summary>
+            /// The only type that Microsoft Entra ID supports is Bearer.
+            /// </summary>
             [JsonPropertyName("token_type")]
             public string? TokenType { get; set; }
 
             [JsonPropertyName("expires_in")]
-            public int? ExpiresIn { get; set; }
+            public int? ExpiresInSeconds { get; set; }
 
+            /// <summary>
+            /// Used to indicate an extended lifetime for the access token and to support resiliency when the token issuance service isn't responding.
+            /// </summary>
             [JsonPropertyName("ext_expires_in")]
-            public int? ExtExpiresIn { get; set; }
+            public int? ExtExpiresInSeconds { get; set; }
 
             [JsonPropertyName("access_token")]
             public string? AccessToken { get; set; }
@@ -52,11 +70,12 @@ namespace Stowage.Impl.Microsoft {
 
         private async Task ObtainToken() {
             string tokenRequestUrl = $"https://login.microsoftonline.com/{_clientSecretCredential.TenantId}/oauth2/v2.0/token";
-            var nvp = new List<KeyValuePair<string, string>>();
-            nvp.Add(new KeyValuePair<string, string>("client_id", _clientSecretCredential.ClientId));
-            nvp.Add(new KeyValuePair<string, string>("scope", Scope));
-            nvp.Add(new KeyValuePair<string, string>("client_secret", _clientSecretCredential.ClientSecret));
-            nvp.Add(new KeyValuePair<string, string>("grant_type", "client_credentials"));
+            var nvp = new Dictionary<string, string> {
+                ["client_id"] = _clientSecretCredential.ClientId,
+                ["scope"] = Scope,
+                ["client_secret"] = _clientSecretCredential.ClientSecret,
+                ["grant_type"] = "client_credentials"
+            };
 
             var request = new HttpRequestMessage(HttpMethod.Post, tokenRequestUrl) {
                 Content = new FormUrlEncodedContent(nvp)

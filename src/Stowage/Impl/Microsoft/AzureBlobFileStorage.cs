@@ -90,6 +90,7 @@ namespace Stowage.Impl.Microsoft {
         private async Task<string> ListBlobsAsync(IOPath path,
             string? prefix = null,
             string? delimiter = null,
+            string? marker = null,
             string include = "metadata") {
             string url = $"{path.NLS}?restype=container&comp=list&include={include}";
 
@@ -98,6 +99,9 @@ namespace Stowage.Impl.Microsoft {
 
             if(delimiter != null)
                 url += "&delimiter=" + delimiter;
+
+            if(marker != null)
+                url += "&marker=" + marker;
 
             HttpResponseMessage response = await SendAsync(new HttpRequestMessage(HttpMethod.Get, url));
             response.EnsureSuccessStatusCode();
@@ -128,9 +132,15 @@ namespace Stowage.Impl.Microsoft {
 
             path.ExtractPrefixAndRelativePath(out string containerName, out IOPath prefix);
 
-            string rawXml = await ListBlobsAsync(containerName,
-                prefix.IsRootPath ? null : prefix.Full.Trim('/') + "/",
-               delimiter: recurse ? null : "/");
+            string? marker = null;
+            do {
+                string rawXml = await ListBlobsAsync(containerName,
+                    prefix.IsRootPath ? null : prefix.Full.Trim('/') + "/",
+                    recurse ? null : "/",
+                    marker);
+
+                XmlResponseParser.ParseBlobListResponse(rawXml, result, out marker);
+            } while(marker != null);
 
             if(recurse) {
                 Implicits.AssumeImplicitFolders(prefix, result);

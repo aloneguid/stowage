@@ -198,6 +198,21 @@ namespace Stowage.Test.Integration {
                 Assert.False(true, $"a single entry {f1}");
         }
 
+        [Fact]
+        public async Task Ls_6_000_ListsAll() {
+            int preCount = (await _storage.Ls(_pathPrefix)).Count;
+            int add = 6000 - preCount;
+
+            // write 10k files
+            for(int i = 0; i < add; i++) {
+                await GetRandomStreamIdAsync();
+            }
+
+            int postCount = (await _storage.Ls(_pathPrefix)).Count;
+
+            Assert.True(postCount >= 6000);
+        }
+
 
         [Fact]
         public async Task OpenRead_DoesntExist_ReturnsNull() {
