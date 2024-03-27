@@ -8,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace Stowage {
     abstract class PolyfilledFileStorage : IFileStorage {
+
+        private static readonly JsonSerializerOptions _prettyOptions = new JsonSerializerOptions {
+            WriteIndented = true
+        };
+
         public abstract Task<IReadOnlyCollection<IOEntry>> Ls(IOPath? path = null, bool recurse = false, CancellationToken cancellationToken = default);
 
         public abstract Task<Stream> OpenWrite(IOPath path, CancellationToken cancellationToken = default);
@@ -29,13 +34,13 @@ namespace Stowage {
             }
         }
 
-        public async Task WriteAsJson(IOPath path, object value, CancellationToken cancellationToken = default) {
+        public async Task WriteAsJson(IOPath path, object value, bool pretty = false, CancellationToken cancellationToken = default) {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
             if(value is null)
                 throw new ArgumentNullException(nameof(value));
 
-            string json = JsonSerializer.Serialize(value);
+            string json = pretty ? JsonSerializer.Serialize(value, _prettyOptions) : JsonSerializer.Serialize(value);
             await WriteText(path, json, null, cancellationToken);
         }
 

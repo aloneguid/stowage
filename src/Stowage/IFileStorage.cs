@@ -66,9 +66,10 @@ namespace Stowage {
         /// </summary>
         /// <param name="path"></param>
         /// <param name="value">Object value to serialize.</param>
+        /// <param name="pretty">When true, will be written as idented json</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task WriteAsJson(IOPath path, object value, CancellationToken cancellationToken = default);
+        Task WriteAsJson(IOPath path, object value, bool pretty = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Deletes a single object by it's full path.
