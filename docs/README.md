@@ -4,7 +4,7 @@
 
 ![logo](../media/icon/icon-256.png)
 
-> This documentation is for Stowage v2 which is currently in the pre-release stage. Version 1 documentation can be found [here](README.v1.md).
+> This documentation is for Stowage v2 which is a major redesign. Version 1 documentation can be found [here](README.v1.md).
 
 **Stowage** is a **bloat-free .NET cloud storage kit** that supports at minimum THE major ☁ providers.
 
