@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using SysIO = System.IO;
 
 namespace Stowage.Impl {
-    class LocalDiskFileStorage : PolyfilledFileStorage {
+    class LocalDiskFileStorage : PolyfilledFileStorage, ILocalDiskFileStorage {
         private readonly string _directoryFullName;
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace Stowage.Impl {
                 return fInfos.Select(i => ToIOEntry(i, addAttributes)).ToList();
             }
 
-            return new IOEntry[0];
+            return Array.Empty<IOEntry>();
         }
 
         public override Task<IReadOnlyCollection<IOEntry>> Ls(IOPath? path = null, bool recurse = false, CancellationToken cancellationToken = default) {
@@ -176,6 +176,10 @@ namespace Stowage.Impl {
             Stream s = overwrite ? SysIO.File.Create(path) : SysIO.File.OpenWrite(path);
             s.Seek(0, SeekOrigin.End);
             return s;
+        }
+
+        public string ToNativeLocalPath(IOPath path) {
+            return Path.Combine(_directoryFullName, path.NLS);
         }
     }
 }

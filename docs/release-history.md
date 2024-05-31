@@ -1,4 +1,8 @@
-﻿## 2.0.0
+﻿## 2.0.1
+
+Local disk file storage provider now implements `ILocalDiskFileStorage` interface, which exposes `ToNativeLocalPath` method returning full path to the file on the local disk, specific to the OS you are running on. This is useful when you need to pass file paths to external tools or libraries that need native OS paths.
+
+## 2.0.0
 
 2.0.0 introduces massive *ergonomic improvements* and some breaking changes.
 

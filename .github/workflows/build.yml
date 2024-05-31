@@ -1,7 +1,7 @@
 ﻿name: build
 
 env:
-  v: '2.0.0'
+  v: '2.0.1'
   av: '2.0.0'
 
 on:
@@ -29,7 +29,6 @@ jobs:
       with:
         dotnet-version: |
           6.0.x
-          7.0.x
           8.0.x
     - name: Install dependencies
       run: dotnet restore src/Stowage.sln
