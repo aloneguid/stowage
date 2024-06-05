@@ -23,6 +23,12 @@ namespace Stowage.Test {
 
         #endregion
 
+        #region [ Azure Sas Token Auth ]
+
+        string AzureStorageSasToken { get; }
+
+        #endregion
+
         string AwsBucket { get; }
 
         string AwsKey { get; }

@@ -60,5 +60,12 @@ namespace Stowage.Test.Integration.Impl {
 
             await storage.Ls();
         }
+
+        [Fact]
+        public async Task Auth_WithSasToken() {
+            IFileStorage storage = Files.Of.AzureBlobStorageWithSasToken(_settings.AzureStorageAccount, _settings.AzureStorageSasToken);
+
+            await storage.Ls("/" +_settings.AzureContainerName + "/");
+        }
     }
 }

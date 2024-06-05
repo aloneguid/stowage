@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -148,6 +148,28 @@ namespace Stowage {
             const string sharedKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
             var endpoint = new Uri("http://127.0.0.1:10000/devstoreaccount1");
             return new AzureBlobFileStorage(endpoint, new SharedKeyAuthHandler(accountName, sharedKey));
+        }
+
+        /// <summary>
+        /// Create Azure Blob Storage connection with Sas Token authentication.
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="accountName"></param>
+        /// <param name="sasToken"></param>
+        /// <returns></returns>
+        public static IFileStorage AzureBlobStorageWithSasToken(this IFilesFactory _, string accountName, string sasToken) {
+            return new AzureBlobFileStorage(accountName, new SasAuthHandler(sasToken));
+        }
+
+        /// <summary>
+        /// Create Azure Blob Storage connection with Sas Token authentication and custom endpoint.
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="endpoint"></param>
+        /// <param name="sasToken"></param>
+        /// <returns></returns>
+        public static IFileStorage AzureBlobStorageWithSasToken(this IFilesFactory _, Uri endpoint, string sasToken) {
+            return new AzureBlobFileStorage(endpoint, new SasAuthHandler(sasToken));
         }
 
         /// <summary>
