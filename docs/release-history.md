@@ -2,6 +2,7 @@
 
 ### New
 - Connection string for disk (`disk://`) can be passed without path, in which case the instance is created against entire disk.
+- Added overload to connect to azure storage using SAS token by @stevehansen in #22
 
 ## 2.0.1
 
