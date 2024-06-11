@@ -23,5 +23,11 @@ namespace Stowage.Test.Integration.Impl {
 
             Assert.True(nativePath.Length > 0);
         }
+
+        [Fact]
+        public async Task CreateFromConnectionString() {
+            IFileStorage ifs = Files.Of.ConnectionString("disk://");
+            Assert.NotNull(ifs);
+        }
     }
 }

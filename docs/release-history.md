@@ -1,4 +1,9 @@
-﻿## 2.0.1
+﻿## 2.0.2
+
+### New
+- Connection string for disk (`disk://`) can be passed without path, in which case the instance is created against entire disk.
+
+## 2.0.1
 
 Local disk file storage provider now implements `ILocalDiskFileStorage` interface, which exposes `ToNativeLocalPath` method returning full path to the file on the local disk, specific to the OS you are running on. This is useful when you need to pass file paths to external tools or libraries that need native OS paths.
 

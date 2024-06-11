@@ -9,9 +9,9 @@ namespace Stowage.Factories {
     class BuiltInConnectionFactory : IConnectionFactory {
         public IFileStorage? Create(ConnectionString connectionString) {
             if(connectionString.Prefix == "disk") {
-                connectionString.GetRequired("path", true, out string path);
+                string? path = connectionString.Get("path");
 
-                return new LocalDiskFileStorage(path);
+                return path == null ? Files.Of.EntireLocalDisk(): Files.Of.LocalDisk(path);
             }
 
             if(connectionString.Prefix == "inmemory") {
