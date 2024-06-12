@@ -30,5 +30,10 @@ namespace Stowage.Test.Integration.Impl {
             IReadOnlyCollection<IOEntry> objects = await _storage.Ls(new IOPath(buckets.First().Name + "/"));
             Assert.NotEmpty(objects);
         }
+
+        [Fact]
+        public async Task DefaultProfileConnectionString() {
+            IFileStorage fs = Files.Of.ConnectionString("s3://");
+        }
     }
 }

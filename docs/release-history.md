@@ -4,6 +4,10 @@
 - Connection string for disk (`disk://`) can be passed without path, in which case the instance is created against entire disk.
 - Added overload to connect to azure storage using SAS token by @stevehansen in #22
 
+## Improvements
+- AWS S3 connection string can now be parameterless, in which case it will default to using default profile from AWS CLI configuration.
+- Documentation on connection strings (or most of it) can be found in the readme now.
+
 ## 2.0.1
 
 Local disk file storage provider now implements `ILocalDiskFileStorage` interface, which exposes `ToNativeLocalPath` method returning full path to the file on the local disk, specific to the OS you are running on. This is useful when you need to pass file paths to external tools or libraries that need native OS paths.

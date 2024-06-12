@@ -190,6 +190,56 @@ Interactive authentication with user credentials, and managed identities are not
 
 Azure emulator is supported, just use `AzureBlobStorageWithLocalEmulator()` method to connect to it.
 
+## 🦓 Connection Strings
+
+You can also use connection strings, which are useful when implementation type is unknown beforehand, should be configurable, or you just don't want to implement implementation factory yourself. To create a storage using connection string use the following method:
+
+```csharp
+IFileStorage storage = Files.Of.ConnectionString(connectionString);
+```
+
+Connection strings have the following format: `<prefix>://<parameters>`.
+
+Prefix is implementation type, like `disk`, `s3` and so on, and parameters are implementation specific.
+
+```mermaid
+mindmap
+	root((CS))
+		AWS S3
+			prefix
+				s3
+			connection types
+				AWS CLI profiles
+					examples
+							default profile
+								s31["`s3://`"]
+								s32["`s3://profile=default`"]
+							specific profile
+								s33["`s3://profile=name`"]
+                    optional parameters
+                        region
+                            if not specified, must be in cli profile
+				using keys
+					examples
+						s34["`s3://keyId=...;key=...;region=...`"]
+		local disk
+			prefix
+				disk
+			connection types
+				entire disk
+					disk2["`disk://`"]
+				specific directory
+					disk1["`disk://path=localPath`"]
+		in-memory
+		azure blobs
+		DBFS
+						
+```
+
+
+
+
+
 ## 📈 Extending
 
 There are many ways to extend functionality:

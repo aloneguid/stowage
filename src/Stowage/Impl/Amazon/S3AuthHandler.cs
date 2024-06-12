@@ -123,7 +123,7 @@ namespace Stowage.Impl.Amazon {
 
             // final signature
             byte[] signatureRaw = HmacSha256(stringToSign, kSigning);
-            string signature = signatureRaw.ToHexString();
+            string signature = signatureRaw.ToHexString()!;
 
             string auth = $"Credential={_accessKeyId}/{nowDate}/{region}/s3/aws4_request,SignedHeaders={signedHeaders},Signature={signature}";
             request.Headers.Authorization = new AuthenticationHeaderValue("AWS4-HMAC-SHA256", auth);

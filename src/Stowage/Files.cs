@@ -213,15 +213,15 @@ namespace Stowage {
         /// Creates Amazon S3 provider using AWS CLI profile name. This also supports session tokens if they are present in the profile definition.
         /// </summary>
         /// <param name="_"></param>
-        /// <param name="profileName">Profile name (required)</param>
+        /// <param name="profileName">Profile name. If not specified, will use default CLI profile.</param>
         /// <param name="region"></param>
         /// <returns></returns>
         public static IAwsS3FileStorage AmazonS3FromCliProfile(this IFilesFactory _,
-            string profileName = CredentialFileParser.DefaultProfileName,
+            string? profileName = null,
             string? region = null) {
             
             var parser = new CredentialFileParser();
-            parser.FillCredentials(profileName,
+            parser.FillCredentials(profileName ?? CredentialFileParser.DefaultProfileName,
                 out string accessKeyId, out string secretAccessKey,
                 out string? sessionToken,
                 out string? configRegion);
