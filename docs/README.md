@@ -231,8 +231,14 @@ mindmap
 				specific directory
 					disk1["`disk://path=localPath`"]
 		in-memory
+			prefix
+				inmemory
+			example
+				im1["`inmemory://`"]
 		azure blobs
+			todo
 		DBFS
+			todo
 						
 ```
 
