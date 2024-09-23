@@ -6,7 +6,7 @@
         xmlns:views="clr-namespace:Stowage.UI.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="Stowage.UI.Views.MainWindow"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/icon.ico"
         Title="Stowage.UI">
         <views:MainView />
 </Window>
