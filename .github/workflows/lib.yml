@@ -1,4 +1,4 @@
-﻿name: build
+﻿name: lib
 
 env:
   VERSION: 2.0.2
