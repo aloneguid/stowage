@@ -1,4 +1,4 @@
-﻿name: release
+﻿name: lib
 
 on:
   workflow_dispatch:
