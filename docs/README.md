@@ -190,6 +190,19 @@ Interactive authentication with user credentials, and managed identities are not
 
 Azure emulator is supported, just use `AzureBlobStorageWithLocalEmulator()` method to connect to it.
 
+### Exotic providers
+
+#### Local disk cache
+
+This storage essentially wraps around another storage to provide content caching capabilities. Example:
+
+```csharp
+IFileStorage storage = Files.Of.AzureBlobStorage(accountName, sharedKey);
+IFileStorage cachedStorage = Files.Of.LocalDiskCacheStorage(storage);
+```
+
+When using `cachedStorage`, all the operations are forwarded to `storage` as is, except for `OpenRead` which downloads content locally and opens a stream to the local file.
+
 ## 🦓 Connection Strings
 
 You can also use connection strings, which are useful when implementation type is unknown beforehand, should be configurable, or you just don't want to implement implementation factory yourself. To create a storage using connection string use the following method:
@@ -257,17 +270,15 @@ I'm a strong advocate of simplicity and not going to repeat the mistake of turni
 
 ## ❔ Who?
 
-- Used by:
-  - [databricks-sql-cli](https://github.com/aloneguid/databricks-sql-cli) - Unofficial Databricks SQL management console.
-  - [Pocket Bricks](https://www.aloneguid.uk/projects/pocketbricks/) - Databricks client for Android.
-  - [Stowage Explorer](https://github.com/DaneVinson/StowageExplorer) - experimental explorer project?
 - Featured in [The .NET MAUI Podcast, episode 98](https://www.dotnetmauipodcast.com/98).
 - Blog post [Exploring Stowage](https://developingdane.com/exploring-stowage/).
+
+Raise a PR to appear here.
 
 ## Related Projects
 
 - [R**CLONE**](https://rclone.org/) - cross-platform open-source cloud sync tool.
-- [Storage.Net](https://github.com/aloneguid/storage) - the roots of this project.
+- [Storage.Net](https://www.aloneguid.uk/projects/storagenet/) - the roots of this project.
 
 ## 💰 Contributing
 
