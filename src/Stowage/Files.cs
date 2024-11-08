@@ -310,6 +310,27 @@ namespace Stowage {
         }
 
         /// <summary>
+        /// Creates a wrapper around a storage that caches the content in memory.
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="parent">Storage interface to create caching around</param>
+        /// <param name="memoryBlockId">Optional memory block id.</param>
+        /// <param name="maxAge">Maximum period to keep the files in.</param>
+        /// <param name="clearOnDispose">Whether to scan storage and run checks and evictions</param>
+        /// <returns></returns>
+        public static ICachedStorage MemoryCacheStorage(this IFilesFactory _, IFileStorage parent,
+            string? memoryBlockId = null,
+            TimeSpan? maxAge = null,
+            bool clearOnDispose = false) {
+
+            return new CachedFileContentStorage(parent,
+                InMemoryFileStorage.CreateOrGet(memoryBlockId),
+                maxAge ?? TimeSpan.FromHours(1),
+                clearOnDispose,
+                false);
+        }
+
+        /// <summary>
         /// Sets the logger for the library
         /// </summary>
         /// <param name="logMessage"></param>
