@@ -48,6 +48,11 @@ namespace Stowage.Impl {
         /// 
         /// </summary>
         public override void Dispose() {
+
+            if(_cleanupOnDispose) {
+                Cleanup(_maxAge, CancellationToken.None).Forget();
+            }
+
             base.Dispose();
 
             _parent.Dispose();
@@ -55,8 +60,6 @@ namespace Stowage.Impl {
             if(_disposeCachingBackend) {
                 _cachingBackend.Dispose();
             }
-
-            // todo: enumerate and clean all the old entries
         }
 
         public override async Task<Stream?> OpenRead(IOPath path, CancellationToken cancellationToken = default) {

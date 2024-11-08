@@ -284,6 +284,15 @@ namespace Stowage {
             return new DatabricksRestClient(profileName);
         }
 
+        /// <summary>
+        /// Creates a wrapper around a storage that caches the content on local disk.
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="parent">Storage interface to create caching around.</param>
+        /// <param name="cacheDir">Caching directory. When not specified, will create 'stowage.cache' subdirectory in your OS'es temp directory.</param>
+        /// <param name="maxAge">Maximum period to keep the files in.</param>
+        /// <param name="clearOnDispose">Whether to scan storage and run checks and evictions</param>
+        /// <returns></returns>
         public static ICachedStorage LocalDiskCacheStorage(this IFilesFactory _, IFileStorage parent,
             string? cacheDir = null,
             TimeSpan? maxAge = null,
