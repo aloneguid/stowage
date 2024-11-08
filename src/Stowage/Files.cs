@@ -284,6 +284,22 @@ namespace Stowage {
             return new DatabricksRestClient(profileName);
         }
 
+        public static ICachedStorage LocalDiskCacheStorage(this IFilesFactory _, IFileStorage parent,
+            string? cacheDir = null,
+            TimeSpan? maxAge = null,
+            bool clearOnDispose = false) {
+
+            string diskDir = cacheDir ?? Path.Combine(Path.GetTempPath(), "stowage.cache");
+
+            var diskBackend = new LocalDiskFileStorage(diskDir);
+
+            return new CachedFileContentStorage(parent,
+                diskBackend,
+                maxAge ?? TimeSpan.FromHours(1),
+                clearOnDispose,
+                true);
+        }
+
         /// <summary>
         /// Sets the logger for the library
         /// </summary>

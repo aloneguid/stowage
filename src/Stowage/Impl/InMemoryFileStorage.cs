@@ -138,6 +138,9 @@ namespace Stowage.Impl {
             }
 
             tag.entry = path;
+            tag.entry.CreatedTime = DateTime.UtcNow;
+            tag.entry.LastModificationTime = tag.entry.CreatedTime;
+            tag.entry.MD5 = sourceStream.ToByteArray().MD5().ToHexString();
             tag.data = sourceStream;
 
             _pathToTag[path] = tag;
