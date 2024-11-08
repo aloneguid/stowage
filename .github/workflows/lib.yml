@@ -1,9 +1,9 @@
 ﻿name: lib
 
 env:
-  VERSION: 2.0.2
+  VERSION: 2.1.0
   ASM_VERSION: 2.0.0
-  VERSION_SUFFIX: '-pre.4'
+  VERSION_SUFFIX: '-pre.1'
   # VERSION_SUFFIX: ''
 
 on:

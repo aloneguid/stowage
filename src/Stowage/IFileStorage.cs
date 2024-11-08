@@ -98,6 +98,13 @@ namespace Stowage {
         /// <returns>Object metadata, or null if object does not exist.</returns>
         Task<IOEntry?> Stat(IOPath path, CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Renames object
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="newName"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         Task Ren(IOPath name, IOPath newName, CancellationToken cancellationToken = default);
 
         // todo:

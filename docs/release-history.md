@@ -1,10 +1,23 @@
-﻿## 2.0.2
+﻿## 2.1.0
 
 ### New
+
+- Implemented cached file storage.
+
+### Improved
+
+- Placing entries in memory cache also remembers creation and modification times.
+- Placing entries in memory cache calculates MD5.
+
+## 2.0.2
+
+### New
+
 - Connection string for disk (`disk://`) can be passed without path, in which case the instance is created against entire disk.
 - Added overload to connect to azure storage using SAS token by @stevehansen in #22
 
-## Improvements
+### Improvements
+
 - AWS S3 connection string can now be parameterless, in which case it will default to using default profile from AWS CLI configuration.
 - Documentation on connection strings (or most of it) can be found in the readme now.
 
