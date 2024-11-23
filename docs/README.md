@@ -118,6 +118,26 @@ Instantiation instructions are in the code documentation ([IntelliSense](https:/
 
 Below are some details worth mentioning.
 
+### Local disk
+
+It's just what it says - local disk, which by default maps to an entire filesystem. In Windows, which has drive letters, it will map to an entire disk of where the application's current directory's drive is (i.e. if you are in `c:/my/app` it it will map to `c:/`).
+
+```csharp
+IFileStorage storage = Files.Of.LocalDisk();
+// or
+IFileStorage storage = Storage.Of.ConnectionString("disk://")
+```
+
+Optionally, you can specify the root directory:
+
+```csharp
+IFileStorage storage = Files.Of.LocalDisk("/a/folder");
+// or
+IFileStorage storage = Storage.Of.ConnectionString("disk://path=/a/folder")
+```
+
+> do not forget there is `path` keyword in the connection string, it's so tempting to write "disk://a/folder" instead of "disk://path=/a/folder"!
+
 ### AWS S3
 
 In AWS, the path addressing style is the following:
@@ -210,7 +230,7 @@ IFileStorage storage = Files.Of.AzureBlobStorage(
     new ClientSecretCredential(tenantId, clientId, clientSecret));
 ```
 
-Interactive authentication with user credentials, and managed identities are not yet supported, but watch this space.
+Managed identities are not yet supported due to low demand, but watch this space.
 
 #### Emulator
 
@@ -228,55 +248,6 @@ IFileStorage cachedStorage = Files.Of.LocalDiskCacheStorage(storage);
 ```
 
 When using `cachedStorage`, all the operations are forwarded to `storage` as is, except for `OpenRead` which downloads content locally and opens a stream to the local file.
-
-## 🦓 Connection Strings
-
-You can also use connection strings, which are useful when implementation type is unknown beforehand, should be configurable, or you just don't want to implement implementation factory yourself. To create a storage using connection string use the following method:
-
-```csharp
-IFileStorage storage = Files.Of.ConnectionString(connectionString);
-```
-
-Connection strings have the following format: `<prefix>://<parameters>`.
-
-Prefix is implementation type, like `disk`, `s3` and so on, and parameters are implementation specific.
-
-```mermaid
-mindmap
-	root((CS))
-		AWS S3
-			prefix
-				s3
-			connection types
-				AWS CLI profiles
-					examples
-							default profile
-								s31["`s3://`"]
-								s32["`s3://profile=default`"]
-							specific profile
-								s33["`s3://profile=name`"]
-                    optional parameters
-                        region
-                            if not specified, must be in cli profile
-				using keys
-					examples
-						s34["`s3://keyId=...;key=...;region=...`"]
-		local disk
-			prefix
-				disk
-			connection types
-				entire disk
-					disk2["`disk://`"]
-				specific directory
-					disk1["`disk://path=localPath`"]
-		in-memory
-		azure blobs
-		DBFS
-						
-```
-
-
-
 
 
 ## 📈 Extending
