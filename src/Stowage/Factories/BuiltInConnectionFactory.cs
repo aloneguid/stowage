@@ -41,7 +41,8 @@ namespace Stowage.Factories {
                 if(!string.IsNullOrEmpty(accessKey)) {
                     connectionString.GetRequired(KnownParameter.KeyOrPassword, true, out string secretKey);
                     connectionString.GetRequired(KnownParameter.Region, true, out string region);
-                    return Files.Of.AmazonS3(accessKey, secretKey, region);
+                    string? sessionToken = connectionString.Get(KnownParameter.SessionToken);
+                    return Files.Of.AmazonS3(accessKey, secretKey, region, sessionToken);
                 }
 
                 // using CLI profile

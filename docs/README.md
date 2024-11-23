@@ -130,23 +130,45 @@ In AWS, the path addressing style is the following:
 
 #### Authentication
 
+##### Key/Secret
+
  The most usual way to authenticate with S3 is to use the following method:
 
 ```csharp
 IFileStorage storage = Files.Of.AmazonS3(key, secret, region);
+// or
+IFileStorage storage = Storage.Of.ConnectionString("s3://keyId=<key>;key=<secret>;region=<region>")
 ```
 
 These are what Amazon calls "long-term" credentials. If you are using STS, the same method overload allows you to pass `sessionToken`.
+
+```csharp
+IFileStorage storage = Files.Of.AmazonS3(key, secret, region, sessionToken);
+//or
+IFileStorage storage = Storage.Of.ConnectionString("s3://keyId=<key>;key=<secret>;region=<region>;sessionToken=<session token>")
+```
+
+##### CLI Profile
 
 Another way to authenticate is using CLI profile. This is useful when you machine is already authenticated using [aws cli](https://aws.amazon.com/cli/), [awsume](https://awsu.me/) or similar tools that write credentials and configuration to `~/.aws/credentials` and `~/.aws/config`. 
 
 You only need to pass the profile name (and only if it's not a default one):
 
 ```csharp
+// ---- using default profile ----
+
 IFileStorage storage = Files.Of.AmazonS3FromCliProfile();
+//or
+IFileStorage storage = Storage.Of.ConnectionString("s3://");
+
+// ----- using specific profile, like "myprofile" ----
+IFileStorage storage = Files.Of.AmazonS3FromCliProfile("myprofile");
+//or
+IFileStorage storage = Storage.Of.ConnectionString("s3://profile=myprofile");
+
 ```
 
-This method has other default parameters, such as `regionName` which can be specified or overridden if not found in CLI configuration.
+This method has other default parameters, such as `regionName` which can be specified or overridden if not found in CLI configuration, i.e. `Files.Of.AmazonS3FromCliProfile();` has optional `region` parameters, and connection string has optional `region=` keyword.
 
 ##### Minio
 
@@ -170,13 +192,17 @@ Note that there is no storage account in the path, mostly because *Shared Key au
 
 #### Authentication
 
+##### Shared Key
+
 Azure provider supports authentication with [Shared Key](https://docs.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key):
 
 ```csharp
 IFileStorage storage = Files.Of.AzureBlobStorage(accountName, sharedKey);
+// or
+IFileStorage storage = Storage.Of.ConnectionString("az://account=<account name>;key=<shared key>")
 ```
 
-Since v2, authentication with Entra Id service principals is supported too:
+##### Entra Id service principals
 
 ```csharp
 IFileStorage storage = Files.Of.AzureBlobStorage(

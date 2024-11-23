@@ -3,6 +3,7 @@
 ### New
 
 - Implemented cached file storage.
+- S3 connection string can optionally accept session token.
 
 ### Improved
 
