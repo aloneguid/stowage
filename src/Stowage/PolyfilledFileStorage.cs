@@ -125,14 +125,18 @@ namespace Stowage {
         }
 
         private async Task RenFile(IOPath oldPath, IOPath newPath, CancellationToken cancellationToken = default) {
+            bool copied = false;
             using(Stream? src = await OpenRead(oldPath, cancellationToken)) {
                 if(src != null) {
                     using(Stream dest = await OpenWrite(newPath, cancellationToken)) {
                         await src.CopyToAsync(dest);
+                        copied = true;
                     }
-
-                    await Rm(oldPath);
                 }
+            }
+
+            if(copied) {
+                await Rm(oldPath); 
             }
         }
 
