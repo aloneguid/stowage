@@ -21,7 +21,7 @@ namespace Stowage.Desktop {
             _entryPathDisplay = entry.Path.Full;
             _fileStorage = fileStorage;
 
-            LoadContentAsync();
+            LoadContentAsync().Forget();
         }
 
         public void RenderFrame() {
@@ -40,17 +40,17 @@ namespace Stowage.Desktop {
                 }
                 if(_entry.Properties.Count > 0) {
                     Label("Properties");
-                    using(var tbl = new Table("##props", new[] { "name", "value+" }, outerHeight: 400)) {
+                    Table("##props", new[] { "name", "value+" }, tbl => {
                         foreach(KeyValuePair<string, object> kvp in _entry.Properties) {
                             tbl.BeginRow();
 
-                            tbl.BeginCol();
+                            tbl.NextColumn();
                             Label(kvp.Key);
 
-                            tbl.BeginCol();
+                            tbl.NextColumn();
                             Label(kvp.Value?.ToString() ?? "");
                         }
-                    }
+                    }, outerHeight: 400);
                 }
             }
 

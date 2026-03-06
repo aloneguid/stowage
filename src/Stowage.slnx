@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../.editorconfig" />
+    <File Path="../.github/workflows/lib.yml" />
+    <File Path="../.gitignore" />
+    <File Path="../docs/README.md" />
+    <File Path="../docs/release-history.md" />
+  </Folder>
+  <Project Path="Stowage.Desktop/Stowage.Desktop.csproj" />
+  <Project Path="Stowage.Test/Stowage.Test.csproj" />
+  <Project Path="Stowage/Stowage.csproj" />
+</Solution>
