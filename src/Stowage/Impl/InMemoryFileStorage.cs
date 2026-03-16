@@ -32,7 +32,7 @@ namespace Stowage.Impl {
             public DataStream data;
         }
 
-        private readonly Dictionary<IOPath, Tag> _pathToTag = new Dictionary<IOPath, Tag>();
+        private readonly ConcurrentDictionary<IOPath, Tag> _pathToTag = new ConcurrentDictionary<IOPath, Tag>();
 
         public static IFileStorage CreateOrGet(string? id) {
             string instanceId = id ?? "default";
@@ -107,16 +107,13 @@ namespace Stowage.Impl {
             if(path is null)
                 throw new ArgumentNullException(nameof(path));
 
-            //try to delete as entry
-            if(_pathToTag.ContainsKey(path)) {
-                _pathToTag.Remove(path);
-            }
+            _pathToTag.TryRemove(path, out _);
 
             if(path.IsFolder) {
                 List<IOPath> candidates = _pathToTag.Where(p => p.Key.Full.StartsWith(path.Full)).Select(p => p.Key).ToList();
 
                 foreach(IOPath candidate in candidates) {
-                    _pathToTag.Remove(candidate);
+                    _pathToTag.TryRemove(candidate, out _);
                 }
             }
 
